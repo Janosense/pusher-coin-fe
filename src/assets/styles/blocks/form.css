@@ -1,0 +1,130 @@
+.form {
+    display: block;
+    width: 100%;
+
+    @media (min-width: 1024px) {
+        width: 420px;
+        margin: auto;
+    }
+
+    @media (min-width: 1920px) {
+        width: 540px;
+    }
+}
+
+.form__header {
+    margin-bottom: 32px;
+    font-size: 24px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.form__header a {
+    color: var(--yellow);
+    text-decoration: none;
+}
+
+.form__title {
+    color: var(--white)
+}
+
+.form__item {
+    display: block;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.form__textfield-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--purple-light);
+    font-size: 15px;
+}
+
+.form__textfield-label sup {
+    color: var(--yellow);
+    font-weight: 700;
+}
+
+.form__textfield {
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    height: auto;
+    padding: 12px;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: "Oswald", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    color: var(--purple-light);
+    background-color: var(--purple);
+    outline: none;
+}
+
+.form__checkbox {
+    display: none;
+
+    &:checked + .form__checkbox-title::after {
+        opacity: 1;
+    }
+
+    &:checked + .form__checkbox-title {
+        opacity: 1;
+    }
+}
+
+.form__checkbox-label {
+    display: block;
+}
+
+.form__checkbox-title {
+    position: relative;
+    display: block;
+    padding-left: 24px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.4s ease-out;
+
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 1px;
+        left: 0;
+        display: block;
+        width: 14px;
+        height: 14px;
+        border: 1px solid var(--white);
+        border-radius: 3px;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: 4px;
+        display: block;
+        width: 7px;
+        height: 12px;
+        border-bottom: 2px solid var(--yellow);
+        border-right: 2px solid var(--yellow);
+        transform: rotate(35deg);
+        opacity: 0;
+        transition: opacity 0.4s ease-out;
+    }
+}
+
+.form__checkbox-title a {
+    color: var(--yellow);
+    text-decoration: none;
+}
+
+.form__actions {
+    padding-top: 20px;
+    text-align: center;
+}

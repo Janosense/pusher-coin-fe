@@ -1,0 +1,179 @@
+<script setup>
+import {ref} from 'vue';
+import IconRoomEnter from "@/components/icons/IconRoomEnter.vue";
+
+const rooms = ref([{id: 1}, {id: 2}, {id: 3}, {id: 4}, {id: 5}, {id: 6}, {id: 7}, {id: 8}]);
+</script>
+
+<template>
+  <div class="rooms">
+    <div class="wrapper rooms__wrapper">
+      <ul class="rooms__list">
+        <li v-for="(room, index) in rooms" class="rooms__item" :key="room.id">
+          <RouterLink :to="{name: 'room', params: {id: room.id}}" class="rooms__link">
+            <div class="rooms__image-holder">
+              <!--              <img src="@/assets/images/room.png" alt="Room" class="rooms__image">-->
+            </div>
+            <span class="rooms__title">
+              Room {{ index + 1 }} <IconRoomEnter class="rooms__icon-enter"/>
+            </span>
+          </RouterLink>
+        </li>
+      </ul>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.rooms__wrapper {
+  @media (min-width: 768px) {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+}
+
+.rooms__list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  justify-content: center;
+  list-style-type: none;
+  width: 80%;
+  margin: 0 auto;
+  padding: 0;
+  column-gap: 44px;
+  row-gap: 32px;
+
+  @media (min-width: 768px) {
+    width: 90%;
+    max-width: 1100px;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    column-gap: 56px;
+    row-gap: 40px;
+  }
+
+  @media (min-width: 1280px) {
+    column-gap: 72px;
+    row-gap: 48px;
+  }
+}
+
+.rooms__item {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.rooms__link {
+  display: block;
+  text-decoration: none;
+}
+
+.rooms__image-holder {
+  position: relative;
+  height: 0;
+  padding-bottom: 100%;
+  margin-bottom: 8px;
+  border-radius: 20px;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    z-index: 0;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(transparent, var(--yellow), transparent 30%);
+    animation: rotate 2.5s linear infinite;
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    display: block;
+    width: calc(100% - 12px);
+    height: calc(100% - 12px);
+    background-color: var(--white);
+    border-radius: 20px;
+  }
+
+  @media (min-width: 1280px) {
+    margin-bottom: 12px;
+  }
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(1turn);
+  }
+}
+
+@media (hover: hover) {
+  .rooms__link:hover:deep(.rooms__image-holder::before) {
+    opacity: 1;
+  }
+}
+
+.rooms__image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.rooms__title {
+  display: inline-flex;
+  column-gap: 12px;
+  align-items: center;
+  text-transform: uppercase;
+  color: var(--yellow);
+
+  @media (min-width: 1280px) {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .rooms__title {
+    transform: translateX(20px);
+    transition: transform 0.5s ease-out;
+  }
+
+  .rooms__link:hover:deep(.rooms__title) {
+    transform: translateX(0);
+  }
+
+  .rooms__link:hover:deep(.rooms__icon-enter) {
+    opacity: 1;
+  }
+}
+
+.rooms__icon-enter {
+  display: none;
+  width: 28px;
+  height: 28px;
+  fill: var(--yellow);
+  opacity: 0;
+  transition: opacity 0.5s ease-out 0.2s;
+
+  @media (min-width: 1280px) {
+    display: inline-flex;
+  }
+}
+</style>
