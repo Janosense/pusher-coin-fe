@@ -61,6 +61,7 @@ const chatStore = useChatStore();
   position: fixed;
   left: 0;
   bottom: 0;
+  z-index: 10;
   width: 100%;
   padding: 0;
 

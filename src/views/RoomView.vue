@@ -60,6 +60,7 @@ const isPlaceBetOverlayOpen = ref(false);
 
 .room-view__stream {
   position: relative;
+  z-index: 9;
   height: calc(100vh - 218px);
   pointer-events: none;
 
