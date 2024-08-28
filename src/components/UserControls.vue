@@ -64,6 +64,7 @@ const chatStore = useChatStore();
   z-index: 10;
   width: 100%;
   padding: 0;
+  background-color: var(--purple-dark);
 
   @media (min-width: 768px) {
     left: 88px;

@@ -63,6 +63,7 @@ const isPlaceBetOverlayOpen = ref(false);
   z-index: 9;
   height: calc(100vh - 218px);
   pointer-events: none;
+  min-height: -webkit-fill-available;
 
   @media (min-width: 768px) {
     height: calc(100vh - 184px);
