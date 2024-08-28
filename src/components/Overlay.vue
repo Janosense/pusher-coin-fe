@@ -63,6 +63,7 @@ const props = defineProps({
 
   @media (min-width: 1024px) {
     max-width: 480px;
+    max-height: 98%;
   }
 }
 
