@@ -10,7 +10,7 @@ import IconCoin from '@/components/icons/IconCoin.vue';
     <Chat/>
     <div class="room-view__layout">
       <div class="room-view__stream">
-        <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/aARdcfsmPto?autoplay=1&controls=0&showinfo=0&mute=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/oXvPA6l4pts?autoplay=1&controls=0&showinfo=0&mute=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
       </div>
       <UserControls/>
     </div>

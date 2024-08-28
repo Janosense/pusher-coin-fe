@@ -1,8 +1,26 @@
 <script setup>
-import {ref} from 'vue';
-import IconRoomEnter from "@/components/icons/IconRoomEnter.vue";
+import { ref } from 'vue';
+import { useRouter } from 'vue-router'
+import IconRoomEnter from '@/components/icons/IconRoomEnter.vue';
+import SignInForm from '@/components/SignInForm.vue';
+import Overlay from '@/components/Overlay.vue';
+import { useAuthenticationStore } from '@/stores/authentication.js';
 
-const rooms = ref([{id: 1}, {id: 2}, {id: 3}, {id: 4}, {id: 5}, {id: 6}, {id: 7}, {id: 8}]);
+const authenticationStore = useAuthenticationStore();
+const router = useRouter();
+
+const rooms = ref([{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }, { id: 6 }, { id: 7 }, { id: 8 }]);
+const activeRoomId = ref(1);
+const isSignInOverlayOpen = ref(false);
+
+const roomEnterGate = (roomId) => {
+  if (authenticationStore.isUserLoggedIn) {
+    router.push({ name: 'room', params: { id: roomId } });
+  } else {
+    activeRoomId.value = roomId;
+    isSignInOverlayOpen.value = true;
+  }
+};
 </script>
 
 <template>
@@ -10,18 +28,22 @@ const rooms = ref([{id: 1}, {id: 2}, {id: 3}, {id: 4}, {id: 5}, {id: 6}, {id: 7}
     <div class="wrapper rooms__wrapper">
       <ul class="rooms__list">
         <li v-for="(room, index) in rooms" class="rooms__item" :key="room.id">
-          <RouterLink :to="{name: 'room', params: {id: room.id}}" class="rooms__link">
+          <div @click="roomEnterGate(room.id)" class="rooms__link">
             <div class="rooms__image-holder">
               <!--              <img src="@/assets/images/room.png" alt="Room" class="rooms__image">-->
             </div>
             <span class="rooms__title">
               Room {{ index + 1 }} <IconRoomEnter class="rooms__icon-enter"/>
             </span>
-          </RouterLink>
+          </div>
         </li>
       </ul>
     </div>
   </div>
+  <Overlay :is-overlay-open="isSignInOverlayOpen"
+           @close-overlay="isSignInOverlayOpen = false">
+    <SignInForm :redirect="{ name: 'room', params: { id: activeRoomId } }"/>
+  </Overlay>
 </template>
 
 <style scoped>
@@ -73,6 +95,7 @@ const rooms = ref([{id: 1}, {id: 2}, {id: 3}, {id: 4}, {id: 5}, {id: 6}, {id: 7}
 .rooms__link {
   display: block;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .rooms__image-holder {
