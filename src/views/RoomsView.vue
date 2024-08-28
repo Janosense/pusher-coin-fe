@@ -27,10 +27,9 @@ const roomEnterGate = (roomId) => {
   <div class="rooms">
     <div class="wrapper rooms__wrapper">
       <ul class="rooms__list">
-        <li v-for="(room, index) in rooms" class="rooms__item" :key="room.id">
+        <li v-for="(room, index) in rooms" class="rooms__item" :key="room.id" :style="{animationDelay: index / 10 + 's'}">
           <div @click="roomEnterGate(room.id)" class="rooms__link">
             <div class="rooms__image-holder">
-              <!--              <img src="@/assets/images/room.png" alt="Room" class="rooms__image">-->
             </div>
             <span class="rooms__title">
               Room {{ index + 1 }} <IconRoomEnter class="rooms__icon-enter"/>
@@ -129,12 +128,46 @@ const roomEnterGate = (roomId) => {
     width: calc(100% - 12px);
     height: calc(100% - 12px);
     background-color: var(--white);
+    background-image: url('@/assets/images/room.png');
+    background-size: 90%;
+    background-repeat: no-repeat;
+    background-position: center;
     border-radius: 20px;
+    animation: 4s linear infinite change-background-size;
+    transition: all 0.3s ease;
   }
 
   @media (min-width: 1280px) {
     margin-bottom: 12px;
   }
+}
+
+.rooms__item:nth-child(2) .rooms__image-holder::after {
+  animation-delay: 0.2s;
+}
+
+.rooms__item:nth-child(3) .rooms__image-holder::after {
+  animation-delay: 0.4s;
+}
+
+.rooms__item:nth-child(4) .rooms__image-holder::after {
+  animation-delay: 0.6s;
+}
+
+.rooms__item:nth-child(8) .rooms__image-holder::after {
+  animation-delay: 0.8s;
+}
+
+.rooms__item:nth-child(7) .rooms__image-holder::after {
+  animation-delay: 1s;
+}
+
+.rooms__item:nth-child(6) .rooms__image-holder::after {
+  animation-delay: 1.2s;
+}
+
+.rooms__item:nth-child(5) .rooms__image-holder::after {
+  animation-delay: 1.4s;
 }
 
 @keyframes rotate {
@@ -143,9 +176,29 @@ const roomEnterGate = (roomId) => {
   }
 }
 
+@keyframes change-background-size {
+  0% {
+    background-size: 90%;
+  }
+  86% {
+    background-size: 90%;
+  }
+  93% {
+    background-size: 80%;
+  }
+  100% {
+    background-size: 90%;
+  }
+}
+
 @media (hover: hover) {
   .rooms__link:hover:deep(.rooms__image-holder::before) {
+    animation: rotate 2.5s linear infinite;
     opacity: 1;
+  }
+
+  .rooms__link:hover:deep(.rooms__image-holder::after) {
+    transform: scale(0.97);
   }
 }
 

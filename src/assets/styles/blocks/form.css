@@ -29,6 +29,7 @@
 }
 
 .form__item {
+    position: relative;
     display: block;
     width: 100%;
     margin-bottom: 16px;
@@ -127,4 +128,39 @@
 .form__actions {
     padding-top: 20px;
     text-align: center;
+}
+
+.form__verification {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: block;
+    padding-left: 32px;
+    color: var(--purple-light);
+
+    @media (min-width: 768px) {
+        top: auto;
+        bottom: 16px;
+        right: auto;
+        left: calc(100% + 12px);
+    }
+    &::before {
+        content: '';
+        position: absolute;
+        top: calc(50% - 12px);
+        left: 0;
+        display: block;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: var(--purple);
+    }
+}
+
+.form__verification--active {
+    color: var(--white);
+
+    &::before {
+        background-color: green;
+    }
 }

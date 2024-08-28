@@ -27,10 +27,10 @@ const authentication = useAuthenticationStore();
         </RouterLink>
       </li>
       <li v-if="authentication.isUserLoggedIn" class="navigation__item">
-        <a href="#" class="navigation__link">
+        <RouterLink :to="{name: 'account'}" class="navigation__link">
           <IconAccount class="navigation__icon"/>
           <span class="navigation__title">Account</span>
-        </a>
+        </RouterLink>
       </li>
       <li v-if="authentication.isUserLoggedIn" class="navigation__item">
         <RouterLink :to="{name: 'history'}" class="navigation__link">
