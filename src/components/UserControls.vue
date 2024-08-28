@@ -34,13 +34,13 @@ const chatStore = useChatStore();
         </div>
       </div>
       <div class="user-controls__layout">
-        <button class="user-controls__button-play" type="button">Play</button>
+        <button class="user-controls__button-play" @click="$emit('openPlaceBetOverlay')">Play</button>
       </div>
       <div class="user-controls__layout">
         <div class="user-controls__layout-inner">
           <div class="user-controls__balance">
             <span class="user-controls__title">Balance</span>
-            <button class="user-controls__balance-replenishment">
+            <button class="user-controls__balance-replenishment" @click="$emit('openReplenishmentBalanceOverlay')">
               <IconCoin/> 1000
             </button>
           </div>

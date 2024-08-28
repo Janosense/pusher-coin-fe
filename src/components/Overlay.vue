@@ -3,6 +3,8 @@ import IconClose from '@/components/icons/IconClose.vue';
 
 const props = defineProps({
   isOverlayOpen: Boolean,
+  title: String,
+  caption: String,
 });
 
 </script>
@@ -14,6 +16,8 @@ const props = defineProps({
         <IconClose/>
       </button>
       <div class="overlay__content">
+        <h3 v-if="title" class="overlay__title">{{ title }}</h3>
+        <p v-if="caption" class="overlay__caption">{{ caption }}</p>
         <slot></slot>
       </div>
     </div>
@@ -31,10 +35,10 @@ const props = defineProps({
   justify-content: center;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.6);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.3s ease;
 }
 
 .overlay--open {
@@ -78,11 +82,43 @@ const props = defineProps({
   padding: 0;
   background-color: rgba(0, 0, 0, 0);
   border: 0;
+  cursor: pointer;
 
   svg {
     display: block;
     width: 100%;
     height: 100%;
+  }
+}
+
+.overlay__title {
+  margin: 0 0 20px;
+  text-transform: uppercase;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+
+  @media (min-width: 1024px) {
+    font-size: 24px;
+  }
+
+  @media (min-width: 1440px) {
+    font-size: 28px;
+  }
+}
+
+.overlay__caption {
+  margin: 0;
+  font-weight: 400;
+  text-transform: uppercase;
+  text-align: center;
+
+  @media (min-width: 1024px) {
+    font-size: 18px;
+  }
+
+  @media (min-width: 1440px) {
+    font-size: 20px;
   }
 }
 </style>
