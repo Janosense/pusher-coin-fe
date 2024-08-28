@@ -18,6 +18,7 @@ body {
     background-color: var(--purple-dark);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-height: -webkit-fill-available;
 
     @media (min-width: 768px) {
         padding-left: 88px;
@@ -26,4 +27,8 @@ body {
     @media (min-width: 1920px) {
         padding-left: 100px;
     }
+}
+
+html {
+    height: -webkit-fill-available;
 }

@@ -131,6 +131,7 @@ const chatStore = useChatStore();
   font-size: 26px;
   font-weight: 500;
   text-transform: uppercase;
+  color: var(--black);
   background-color: var(--sand);
   border-radius: 50%;
   border: 5px solid var(--yellow);

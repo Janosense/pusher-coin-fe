@@ -77,6 +77,7 @@ onMounted(() => {
     line-height: 1;
     border: 1px solid var(--purple-dark);
     border-radius: 6px;
+    color: var(--black);
     background-color: var(--purple-light);
     cursor: pointer;
   }
