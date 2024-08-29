@@ -1,22 +1,29 @@
 <script setup>
-import IconAccount from "@/components/icons/IconAccount.vue";
-import IconMain from "@/components/icons/IconMain.vue";
-import IconSupport from "@/components/icons/IconSupport.vue";
-import IconHistory from "@/components/icons/IconHistory.vue";
-import IconLogIn from "@/components/icons/IconLogIn.vue";
-import IconSettings from "@/components/icons/IconSettings.vue";
-import IconLogOut from "@/components/icons/IconLogOut.vue";
-import {useNavigationStore} from '@/stores/navigation.js'
-import {useAuthenticationStore} from '@/stores/authentication.js'
-import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
-import IconSignUp from "@/components/icons/IconSignUp.vue";
+import { ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import IconAccount from '@/components/icons/IconAccount.vue';
+import IconMain from '@/components/icons/IconMain.vue';
+import IconSupport from '@/components/icons/IconSupport.vue';
+import IconHistory from '@/components/icons/IconHistory.vue';
+import IconLogIn from '@/components/icons/IconLogIn.vue';
+import IconSettings from '@/components/icons/IconSettings.vue';
+import IconLogOut from '@/components/icons/IconLogOut.vue';
+import { useNavigationStore } from '@/stores/navigation.js';
+import { useAuthenticationStore } from '@/stores/authentication.js';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import IconSignUp from '@/components/icons/IconSignUp.vue';
 
-const navigation = useNavigationStore();
+const navigationStore = useNavigationStore();
 const authentication = useAuthenticationStore();
+const route = useRoute();
+
+watch(() => route.name, () => {
+  navigationStore.closeNavigation();
+});
 </script>
 
 <template>
-  <nav class="navigation" :class="{'navigation--active': navigation.isNavigationOpen}">
+  <nav class="navigation" :class="{'navigation--active': navigationStore.isNavigationOpen}">
     <a href="" class="navigation__logo-holder">
     </a>
     <ul class="navigation__list">
