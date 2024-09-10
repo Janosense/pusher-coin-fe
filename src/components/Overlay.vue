@@ -67,10 +67,6 @@ const props = defineProps({
   }
 }
 
-.overlay__content {
-  overflow: auto;
-}
-
 .overlay__close-button {
   -webkit-appearance: none;
   position: absolute;

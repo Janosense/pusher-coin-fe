@@ -137,7 +137,7 @@ onMounted(() => {
   }
 
   @media (min-width: 768px) and (max-width: 1023px) {
-    height: calc(100vh - 184px);
+    height: calc(100vh - 232px);
   }
 
   @media (min-width: 100px) and (max-width: 1023px) {

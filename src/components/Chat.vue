@@ -62,7 +62,7 @@ const sendMessage = () => {
       </li>
     </ul>
     <div class="chat__input-holder">
-      <input v-model="message" type="text" class="chat__input" placeholder="Type here..">
+      <input v-model="message" @keyup.enter="sendMessage" type="text" class="chat__input" placeholder="Type here..">
       <button class="chat__send-message" @click="sendMessage">
         <IconSendMessage/>
       </button>
@@ -257,6 +257,7 @@ const sendMessage = () => {
   background-color: rgba(0, 0, 0, 0);
   border: 0;
   outline: none;
+  cursor: pointer;
 
   & svg {
     position: relative;
@@ -266,6 +267,13 @@ const sendMessage = () => {
     height: 32px;
     fill: var(--purple-light);
     transform: rotate(-30deg);
+    transition: fill 0.5s ease-out;
+  }
+}
+
+@media (hover: hover) {
+  .chat__send-message:hover:deep(svg) {
+    fill: var(--yellow);
   }
 }
 </style>

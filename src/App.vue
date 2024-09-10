@@ -1,11 +1,13 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import NavigationToggle from "@/components/NavigationToggle.vue";
 import Navigation from "@/components/Navigation.vue";
+
+const route = useRoute();
 </script>
 
 <template>
-  <header class="header">
+  <header v-if="route.name !== 'room'" class="header">
     <div class="wrapper header__wrapper">
       <NavigationToggle/>
       <div class="header__users-counter">41 Players</div>
@@ -23,16 +25,16 @@ import Navigation from "@/components/Navigation.vue";
 <style scoped>
 .header {
   padding: 16px 0;
-
-  @media (min-width: 768px) {
-    display: none;
-  }
 }
 
 .header__wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  @media (min-width: 768px) {
+    justify-content: flex-end;
+  }
 }
 
 .header__users-counter {
@@ -41,6 +43,14 @@ import Navigation from "@/components/Navigation.vue";
   color: var(--yellow);
   text-transform: uppercase;
   font-size: 14px;
+
+  @media (min-width: 768px) {
+    font-size: 16px;
+  }
+
+  @media (min-width: 1280px) {
+    font-size: 18px;
+  }
 }
 
 .header__users-counter::before {

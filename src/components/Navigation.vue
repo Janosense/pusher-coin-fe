@@ -45,12 +45,6 @@ watch(() => route.name, () => {
           <span class="navigation__title">History</span>
         </RouterLink>
       </li>
-      <li v-if="authentication.isUserLoggedIn" class="navigation__item">
-        <a href="#" class="navigation__link">
-          <IconSettings class="navigation__icon"/>
-          <span class="navigation__title">Settings</span>
-        </a>
-      </li>
       <li class="navigation__item">
         <RouterLink :to="{name: 'support'}" class="navigation__link">
           <IconSupport class="navigation__icon"/>

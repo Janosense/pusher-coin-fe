@@ -1,26 +1,28 @@
 <script setup>
-
+import { useRoute } from 'vue-router';
 import IconSound from '@/components/icons/IconSound.vue';
 import IconChat from '@/components/icons/IconChat.vue';
 import IconAccount from '@/components/icons/IconAccount.vue';
 import IconCoin from '@/components/icons/IconCoin.vue';
 
-import {useChatStore} from "@/stores/chat.js";
+import { useChatStore } from '@/stores/chat.js';
 
+const route = useRoute();
 const chatStore = useChatStore();
 </script>
 
 <template>
   <div class="user-controls">
+    <div class="user-controls__room-id">ROOM {{ route.params.id }}</div>
     <div class="user-controls__wrapper">
       <div class="user-controls__layout">
         <div class="user-controls__layout-inner">
-          <RouterLink :to="{name: 'account'}" class="user-controls__account">
+          <div class="user-controls__account">
             <div class="user-controls__photo-holder">
               <IconAccount class="user-controls__icon user-controls__icon--account"/>
             </div>
             <span class="user-controls__nickname">Player 17</span>
-          </RouterLink>
+          </div>
         </div>
         <div class="user-controls__layout-inner user-controls__layout-inner--controls">
           <button class="user-controls__control user-controls__control--chat"
@@ -41,7 +43,8 @@ const chatStore = useChatStore();
           <div class="user-controls__balance">
             <span class="user-controls__title">Balance</span>
             <button class="user-controls__balance-replenishment" @click="$emit('openReplenishmentBalanceOverlay')">
-              <IconCoin/> 1000
+              <IconCoin/>
+              1000
             </button>
           </div>
         </div>
@@ -81,6 +84,26 @@ const chatStore = useChatStore();
 
   @media (min-width: 1440px) {
     padding: 20px 0;
+  }
+}
+
+.user-controls__room-id {
+  position: absolute;
+  bottom: 100%;
+  left: calc(50% - 46px);
+  display: block;
+  width: 92px;
+  padding: 7px;
+  box-sizing: border-box;
+  text-align: center;
+  background-color: var(--purple-dark);
+  border-radius: 8px 8px 0 0;
+
+  @media (min-width: 1024px) {
+    left: calc(50% - 60px);
+    width: 120px;
+    padding-top: 10px;
+    font-size: 20px;
   }
 }
 
@@ -181,6 +204,7 @@ const chatStore = useChatStore();
   width: 36px;
   height: 36px;
   fill: var(--purple-light);
+  transition: fill 0.5s ease-out;
 }
 
 .user-controls__icon--account {
@@ -215,11 +239,18 @@ const chatStore = useChatStore();
   background-color: rgba(0, 0, 0, 0);
   border: none;
   font-size: 0;
+  cursor: pointer;
 }
 
 .user-controls__control--active {
   .user-controls__icon {
     fill: var(--yellow)
+  }
+}
+
+@media (hover: hover) {
+  .user-controls__control:hover:deep(.user-controls__icon) {
+    fill: var(--yellow);
   }
 }
 

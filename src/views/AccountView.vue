@@ -1,10 +1,11 @@
 <script setup>
-
 import Queue from '@/components/Queue.vue';
-
 import { useAuthenticationStore } from '@/stores/authentication.js';
 import IconAccount from '@/components/icons/IconAccount.vue';
+import Rooms from '@/components/Rooms.vue';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const authentication = useAuthenticationStore();
 </script>
 
@@ -49,7 +50,7 @@ const authentication = useAuthenticationStore();
                 </div>
                 <div class="form__item">
                   <label for="phone" class="form__textfield-label"><sup>*</sup> Phone</label>
-                  <input type="tel" id="phone" name="phone" class="form__textfield"  required>
+                  <input type="tel" id="phone" name="phone" class="form__textfield" required>
                   <span class="form__verification form__verification--active">Verified</span>
                 </div>
                 <button class="form__submit button button--yellow">Save</button>
@@ -78,6 +79,7 @@ const authentication = useAuthenticationStore();
       </div>
     </div>
     <Queue v-if="authentication.isUserLoggedIn"/>
+    <Rooms view="sidebar" v-else @on-room-click="(roomId) => router.push({ name: 'room', params: { id: roomId } })"/>
   </div>
 </template>
 
