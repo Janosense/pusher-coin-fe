@@ -78,8 +78,8 @@ const authentication = useAuthenticationStore();
         </div>
       </div>
     </div>
-    <Queue v-if="authentication.isUserLoggedIn"/>
-    <Rooms view="sidebar" v-else @on-room-click="(roomId) => router.push({ name: 'room', params: { id: roomId } })"/>
+    <Queue v-if="!authentication.isUserLoggedIn"/>
+    <Rooms v-else view="sidebar" @on-room-click="(roomId) => router.push({ name: 'room', params: { id: roomId } })"/>
   </div>
 </template>
 
