@@ -1,8 +1,9 @@
 <script setup>
-import IconCoin from '@/components/icons/IconCoin.vue';
 import { onMounted, ref } from 'vue';
-import iconCoin from '@/assets/images/iconCoin.png'
+import iconCoin from '@/assets/images/iconCoin.png';
+import { useRoute } from 'vue-router';
 
+const route = useRoute();
 const isQueueOpen = ref(false);
 const listItemHeight = ref(document.documentElement.clientWidth >= 1280 ? 60 : 48);
 const queueListRef = ref(null);
@@ -56,7 +57,7 @@ onMounted(() => {
        :class="{'queue--open': isQueueOpen}" @click="toggleQueue">
     <header class="queue__header">
       <h2 class="queue__title">Queue</h2>
-      <span class="queue__users-counter">42 Players</span>
+      <span class="queue__users-counter">42{{ route.name === 'room' ? '/100' : '' }} Players</span>
     </header>
     <ul class="queue__list" ref="queueListRef"
         @scroll="clearQueueTimeout"

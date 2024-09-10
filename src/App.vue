@@ -10,7 +10,7 @@ const route = useRoute();
   <header v-if="route.name !== 'room'" class="header">
     <div class="wrapper header__wrapper">
       <NavigationToggle/>
-      <div class="header__users-counter">41 Players</div>
+      <div class="header__users-counter">100 Players</div>
     </div>
   </header>
   <Navigation/>
