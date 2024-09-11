@@ -7,7 +7,7 @@ const route = useRoute();
 </script>
 
 <template>
-  <header v-if="route.name !== 'room'" class="header">
+  <header class="header" :class="{'header--room': route.name === 'room'}">
     <div class="wrapper header__wrapper">
       <NavigationToggle/>
       <div class="header__users-counter">100 Players</div>
@@ -25,6 +25,12 @@ const route = useRoute();
 <style scoped>
 .header {
   padding: 16px 0;
+}
+
+.header--room {
+  @media (min-width: 768px) {
+    display: none;
+  }
 }
 
 .header__wrapper {
