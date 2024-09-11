@@ -85,7 +85,13 @@ const props = defineProps({
     display: block;
     width: 100%;
     height: 100%;
+    fill: var(--purple-light);
+    transition: fill 0.2s ease;
   }
+}
+
+.overlay__close-button:hover:deep(svg) {
+  fill: var(--yellow);
 }
 
 .overlay__title {

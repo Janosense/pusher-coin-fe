@@ -38,7 +38,9 @@ onMounted(() => {
       <button @click="increaseAmount">+</button>
     </div>
     <div class="place-bet__submit-holder">
-      <button class="place-bet__submit button button--yellow">Play</button>
+      <button class="place-bet__submit button button--yellow">
+        <span>Play</span>
+      </button>
     </div>
   </div>
 </template>
@@ -73,13 +75,17 @@ onMounted(() => {
     text-align: center;
     text-decoration: none;
     text-transform: uppercase;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     line-height: 1;
     border: 1px solid var(--purple-dark);
     border-radius: 6px;
     color: var(--black);
     background-color: var(--purple-light);
     cursor: pointer;
+
+    &:hover {
+      background-color: #6b7788;
+    }
   }
 
   & input {

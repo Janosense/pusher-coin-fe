@@ -53,7 +53,7 @@ const authentication = useAuthenticationStore();
                   <input type="tel" id="phone" name="phone" class="form__textfield" required>
                   <span class="form__verification form__verification--active">Verified</span>
                 </div>
-                <button class="form__submit button button--yellow">Save</button>
+                <button class="form__submit button button--yellow"><span>Save</span></button>
               </form>
             </div>
             <div class="account__form-holder">
@@ -71,7 +71,7 @@ const authentication = useAuthenticationStore();
                   <input type="password" id="password-repeat" name="password-repeat" class="form__textfield"
                          required>
                 </div>
-                <button class="form__submit button button--yellow">Save</button>
+                <button class="form__submit button button--yellow"><span>Save</span></button>
               </form>
             </div>
           </div>

@@ -52,7 +52,7 @@
     display: block;
     width: 100%;
     height: auto;
-    padding: 12px;
+    padding: 10px 12px;
     margin: 0;
     box-sizing: border-box;
     font-family: "Oswald", sans-serif;
@@ -60,11 +60,16 @@
     font-weight: 500;
     font-style: normal;
     font-size: 16px;
-    border: none;
+    border: 1px solid var(--purple);
     border-radius: 8px;
     color: var(--purple-light);
     background-color: var(--purple);
     outline: none;
+    transition: all 0.2s ease;
+
+    &:focus {
+        border: 1px solid #485479;
+    }
 }
 
 .form__checkbox {

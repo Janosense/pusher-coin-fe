@@ -36,7 +36,9 @@ const chatStore = useChatStore();
         </div>
       </div>
       <div class="user-controls__layout">
-        <button class="user-controls__button-play" @click="$emit('openPlaceBetOverlay')">Play</button>
+        <button class="user-controls__button-play" @click="$emit('openPlaceBetOverlay')">
+          <span>Play</span>
+        </button>
       </div>
       <div class="user-controls__layout">
         <div class="user-controls__layout-inner">
@@ -146,6 +148,7 @@ const chatStore = useChatStore();
 }
 
 .user-controls__button-play {
+  position: relative;
   -webkit-appearance: none;
   display: block;
   width: 100px;
@@ -161,7 +164,21 @@ const chatStore = useChatStore();
   border-radius: 50%;
   border: 5px solid var(--yellow);
   box-shadow: -1px 1px 2px 0 rgba(0, 0, 0, 0.6) inset;
+  transition: all 0.3s ease;
   cursor: pointer;
+
+  &:hover {
+    box-shadow: -2px 1px 3px 1px rgba(0, 0, 0, 0.6) inset;
+  }
+
+  &:active {
+    box-shadow: -3px 2px 3px 2px rgba(0, 0, 0, 0.6) inset;
+  }
+
+  & span {
+    position: relative;
+    z-index: 1;
+  }
 
   @media (min-width: 768px) {
     width: 132px;

@@ -37,7 +37,9 @@
       </label>
     </div>
     <div class="form__actions">
-      <button class="button button--yellow form__submit">Sign Up</button>
+      <button class="button button--yellow form__submit">
+        <span>Sign Up</span>
+      </button>
     </div>
   </form>
 </template>

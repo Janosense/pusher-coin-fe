@@ -29,7 +29,9 @@ const authentication = useAuthenticationStore();
                 <textarea id="message" cols="30" rows="10" class="form__textfield" required></textarea>
               </div>
               <div class="form__actions">
-                <button class="button button--yellow form__submit" >Send</button>
+                <button class="button button--yellow form__submit">
+                  <span>Send</span>
+                </button>
               </div>
             </form>
           </div>

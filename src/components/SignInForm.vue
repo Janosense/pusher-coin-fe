@@ -23,7 +23,9 @@ const props = defineProps({
              required>
     </div>
     <div class="form__actions">
-      <button class="button button--yellow form__submit" @click.prevent="authenticationStore.authenticateUser(props.redirect)">Sign In</button>
+      <button class="button button--yellow form__submit" @click.prevent="authenticationStore.authenticateUser(props.redirect)">
+        <span>Sign In</span>
+      </button>
     </div>
   </form>
 </template>

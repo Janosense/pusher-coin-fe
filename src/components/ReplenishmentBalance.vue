@@ -35,22 +35,22 @@ onMounted(() => {
     <p class="replenishment-balance__price">1coin = ₴20</p>
     <ul class="replenishment-balance__list">
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 1">1</button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 1"><span>1</span></button>
       </li>
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 3">3</button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 3"><span>3</span></button>
       </li>
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 5">5</button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 5"><span>5</span></button>
       </li>
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 10">10</button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 10"><span>10</span></button>
       </li>
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 25">25</button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 25"><span>25</span></button>
       </li>
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 50">50</button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 50"><span>50</span></button>
       </li>
     </ul>
     <div class="replenishment-balance__custom-amount">
@@ -59,7 +59,7 @@ onMounted(() => {
       <button @click="increaseAmount">+</button>
     </div>
     <div class="replenishment-balance__submit-holder">
-      <button class="replenishment-balance__submit button button--yellow">Buy
+      <button class="replenishment-balance__submit button button--yellow"><span>Buy</span>
         {{ parseInt(amount) ? amount : 0 }} coins
       </button>
       <p v-if="amount" class="replenishment-balance__price">{{ amount }} coins = ₴{{ amount * 20 }}</p>
