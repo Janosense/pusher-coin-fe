@@ -1,73 +1,75 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import iconCoin from '@/assets/images/iconCoin.png';
-import { useRoute } from 'vue-router';
+import { onMounted, ref } from 'vue'
+import iconCoin from '@/assets/images/iconCoin.png'
+import { useRoute } from 'vue-router'
 
-const route = useRoute();
-const isQueueOpen = ref(false);
-const listItemHeight = ref(document.documentElement.clientWidth >= 1280 ? 60 : 48);
-const queueListRef = ref(null);
-const activeUsers = [...Array(24).keys()];
-let queueOpenStateTimer = null;
+const route = useRoute()
+const isQueueOpen = ref(false)
+const listItemHeight = ref(document.documentElement.clientWidth >= 1280 ? 60 : 48)
+const queueListRef = ref(null)
+const activeUsers = [...Array(24).keys()]
+let queueOpenStateTimer = null
 
 const setListItemHeight = () => {
   window.addEventListener('resize', () => {
-    listItemHeight.value = document.documentElement.clientWidth >= 1280 ? 60 : 48;
-  });
-};
+    listItemHeight.value = document.documentElement.clientWidth >= 1280 ? 60 : 48
+  })
+}
 
 const toggleQueue = () => {
   if (document.documentElement.clientWidth < 1024) {
-    clearTimeout(queueOpenStateTimer);
-    isQueueOpen.value = !isQueueOpen.value;
+    clearTimeout(queueOpenStateTimer)
+    isQueueOpen.value = !isQueueOpen.value
     if (isQueueOpen.value) {
       queueOpenStateTimer = setTimeout(() => {
-        isQueueOpen.value = false;
-        queueListRef.value.scrollTop = 0;
-      }, 5000);
+        isQueueOpen.value = false
+        queueListRef.value.scrollTop = 0
+      }, 5000)
     } else {
-      clearTimeout(queueOpenStateTimer);
-      queueListRef.value.scrollTop = 0;
+      clearTimeout(queueOpenStateTimer)
+      queueListRef.value.scrollTop = 0
     }
   }
-};
+}
 
 const setQueueTimeout = () => {
   if (document.documentElement.clientWidth < 1024) {
     queueOpenStateTimer = setTimeout(() => {
-      isQueueOpen.value = false;
-      queueListRef.value.scrollTop = 0;
-    }, 5000);
+      isQueueOpen.value = false
+      queueListRef.value.scrollTop = 0
+    }, 5000)
   }
-};
+}
 
 const clearQueueTimeout = () => {
   if (document.documentElement.clientWidth < 1024) {
-    clearTimeout(queueOpenStateTimer);
+    clearTimeout(queueOpenStateTimer)
   }
-};
+}
 
 onMounted(() => {
-  setListItemHeight();
-});
+  setListItemHeight()
+})
 </script>
 
 <template>
-  <div class="queue"
-       :class="{'queue--open': isQueueOpen}" @click="toggleQueue">
+  <div class="queue" :class="{ 'queue--open': isQueueOpen }" @click="toggleQueue">
     <header class="queue__header">
       <h2 class="queue__title">Queue</h2>
       <span class="queue__users-counter">42{{ route.name === 'room' ? '/100' : '' }} Players</span>
     </header>
-    <ul class="queue__list" ref="queueListRef"
-        @scroll="clearQueueTimeout"
-        @scrollend="setQueueTimeout">
+    <ul
+      class="queue__list"
+      ref="queueListRef"
+      @scroll="clearQueueTimeout"
+      @scrollend="setQueueTimeout"
+    >
       <li class="queue__item-fixed">
         <span class="queue__number">1</span>
         <div class="queue__photo-holder"></div>
         <span class="queue__nickname">Player 1</span>
         <div class="queue__balance">
-          <img :src="iconCoin" alt="coin">
+          <img :src="iconCoin" alt="coin" />
           {{ 1000 }}
         </div>
         <span class="queue__dots"></span>
@@ -77,18 +79,25 @@ onMounted(() => {
         <div class="queue__photo-holder"></div>
         <span class="queue__nickname">Player 17</span>
         <div class="queue__balance">
-          <img :src="iconCoin" alt="coin">
+          <img :src="iconCoin" alt="coin" />
           {{ 1000 }}
         </div>
       </li>
-      <li v-for="(item, index) in activeUsers" :key="index"
-          :style="{top: listItemHeight * index + 'px', transitionDelay: isQueueOpen ? (0.3 + index / 30) + 's' : 0 + 's' }"
-          class="queue__item" :class="{'queue__item--active-user': item + 1 === 17}">
+      <li
+        v-for="(item, index) in activeUsers"
+        :key="index"
+        :style="{
+          top: listItemHeight * index + 'px',
+          transitionDelay: isQueueOpen ? 0.3 + index / 30 + 's' : 0 + 's'
+        }"
+        class="queue__item"
+        :class="{ 'queue__item--active-user': item + 1 === 17 }"
+      >
         <span class="queue__number">{{ item + 1 }}</span>
         <div class="queue__photo-holder"></div>
         <span class="queue__nickname">Player {{ item + 1 }}</span>
         <div class="queue__balance">
-          <img :src="iconCoin" alt="coin">
+          <img :src="iconCoin" alt="coin" />
           {{ 1000 }}
         </div>
       </li>
@@ -98,7 +107,7 @@ onMounted(() => {
       <div class="queue__photo-holder"></div>
       <span class="queue__nickname">Player 17</span>
       <div class="queue__balance">
-        <img :src="iconCoin" alt="coin">
+        <img :src="iconCoin" alt="coin" />
         1000
       </div>
     </div>

@@ -1,14 +1,14 @@
 <script setup>
-import { useRoute } from 'vue-router';
-import IconSound from '@/components/icons/IconSound.vue';
-import IconChat from '@/components/icons/IconChat.vue';
-import IconAccount from '@/components/icons/IconAccount.vue';
-import IconCoin from '@/components/icons/IconCoin.vue';
+import { useRoute } from 'vue-router'
+import IconSound from '@/components/icons/IconSound.vue'
+import IconChat from '@/components/icons/IconChat.vue'
+import IconAccount from '@/components/icons/IconAccount.vue'
+import IconCoin from '@/components/icons/IconCoin.vue'
 
-import { useChatStore } from '@/stores/chat.js';
+import { useChatStore } from '@/stores/chat.js'
 
-const route = useRoute();
-const chatStore = useChatStore();
+const route = useRoute()
+const chatStore = useChatStore()
 </script>
 
 <template>
@@ -19,19 +19,21 @@ const chatStore = useChatStore();
         <div class="user-controls__layout-inner">
           <div class="user-controls__account">
             <div class="user-controls__photo-holder">
-              <IconAccount class="user-controls__icon user-controls__icon--account"/>
+              <IconAccount class="user-controls__icon user-controls__icon--account" />
             </div>
             <span class="user-controls__nickname">Player 17</span>
           </div>
         </div>
         <div class="user-controls__layout-inner user-controls__layout-inner--controls">
-          <button class="user-controls__control user-controls__control--chat"
-                  @click="chatStore.toggleChat"
-                  :class="{'user-controls__control--active': chatStore.isOpen}">
-            <IconChat class="user-controls__icon"/>
+          <button
+            class="user-controls__control user-controls__control--chat"
+            @click="chatStore.toggleChat"
+            :class="{ 'user-controls__control--active': chatStore.isOpen }"
+          >
+            <IconChat class="user-controls__icon" />
           </button>
           <button class="user-controls__control">
-            <IconSound class="user-controls__icon"/>
+            <IconSound class="user-controls__icon" />
           </button>
         </div>
       </div>
@@ -44,8 +46,11 @@ const chatStore = useChatStore();
         <div class="user-controls__layout-inner">
           <div class="user-controls__balance">
             <span class="user-controls__title">Balance</span>
-            <button class="user-controls__balance-replenishment" @click="$emit('openReplenishmentBalanceOverlay')">
-              <IconCoin/>
+            <button
+              class="user-controls__balance-replenishment"
+              @click="$emit('openReplenishmentBalanceOverlay')"
+            >
+              <IconCoin />
               1000
             </button>
           </div>
@@ -155,7 +160,7 @@ const chatStore = useChatStore();
   height: 100px;
   margin: 0 auto;
   padding: 0;
-  font-family: "Oswald", sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-size: 26px;
   font-weight: 500;
   text-transform: uppercase;
@@ -261,7 +266,7 @@ const chatStore = useChatStore();
 
 .user-controls__control--active {
   .user-controls__icon {
-    fill: var(--yellow)
+    fill: var(--yellow);
   }
 }
 
@@ -272,7 +277,6 @@ const chatStore = useChatStore();
 }
 
 .user-controls__control--chat {
-
   @media (min-width: 1024px) {
     display: none;
   }
@@ -297,7 +301,7 @@ const chatStore = useChatStore();
   min-width: 90px;
   margin: 8px 0 0;
   padding: 2px 28px 4px 28px;
-  font-family: "Oswald", sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-size: 12px;
   font-weight: 300;
   line-height: 1;

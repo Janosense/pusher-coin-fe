@@ -1,33 +1,33 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import IMask from 'imask';
+import { onMounted, ref } from 'vue'
+import IMask from 'imask'
 
-const amount = ref(50);
-const amountInputRef = ref(null);
+const amount = ref(50)
+const amountInputRef = ref(null)
 
 const increaseAmount = () => {
   if (parseInt(amount.value)) {
-    amount.value++;
+    amount.value++
   } else {
-    amount.value = 1;
+    amount.value = 1
   }
-};
+}
 
 const decreaseAmount = () => {
   if (parseInt(amount.value)) {
-    amount.value = amount.value - 1 >= 0 ? amount.value - 1 : 0;
+    amount.value = amount.value - 1 >= 0 ? amount.value - 1 : 0
   } else {
-    amount.value = 0;
+    amount.value = 0
   }
-};
+}
 
 onMounted(() => {
   IMask(amountInputRef.value, {
     mask: Number,
     scale: 0,
-    min: 0,
-  });
-});
+    min: 0
+  })
+})
 </script>
 
 <template>
@@ -35,34 +35,48 @@ onMounted(() => {
     <p class="replenishment-balance__price">1coin = ₴20</p>
     <ul class="replenishment-balance__list">
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 1"><span>1</span></button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 1">
+          <span>1</span>
+        </button>
       </li>
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 3"><span>3</span></button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 3">
+          <span>3</span>
+        </button>
       </li>
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 5"><span>5</span></button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 5">
+          <span>5</span>
+        </button>
       </li>
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 10"><span>10</span></button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 10">
+          <span>10</span>
+        </button>
       </li>
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 25"><span>25</span></button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 25">
+          <span>25</span>
+        </button>
       </li>
       <li class="replenishment-balance__item">
-        <button class="replenishment-balance__button button button--yellow" @click="amount = 50"><span>50</span></button>
+        <button class="replenishment-balance__button button button--yellow" @click="amount = 50">
+          <span>50</span>
+        </button>
       </li>
     </ul>
     <div class="replenishment-balance__custom-amount">
       <button @click="decreaseAmount">-</button>
-      <input v-model="amount" ref="amountInputRef">
+      <input v-model="amount" ref="amountInputRef" />
       <button @click="increaseAmount">+</button>
     </div>
     <div class="replenishment-balance__submit-holder">
-      <button class="replenishment-balance__submit button button--yellow"><span>Buy</span>
-        {{ parseInt(amount) ? amount : 0 }} coins
+      <button class="replenishment-balance__submit button button--yellow">
+        <span>Buy</span> {{ parseInt(amount) ? amount : 0 }} coins
       </button>
-      <p v-if="amount" class="replenishment-balance__price">{{ amount }} coins = ₴{{ amount * 20 }}</p>
+      <p v-if="amount" class="replenishment-balance__price">
+        {{ amount }} coins = ₴{{ amount * 20 }}
+      </p>
     </div>
   </div>
 </template>
@@ -117,7 +131,7 @@ onMounted(() => {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Oswald", sans-serif;
+    font-family: 'Oswald', sans-serif;
     font-optical-sizing: auto;
     font-weight: 500;
     font-style: normal;
@@ -142,7 +156,7 @@ onMounted(() => {
     padding: 12px;
     margin: 0;
     box-sizing: border-box;
-    font-family: "Oswald", sans-serif;
+    font-family: 'Oswald', sans-serif;
     font-optical-sizing: auto;
     font-weight: 500;
     font-style: normal;

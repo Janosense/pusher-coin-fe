@@ -1,60 +1,62 @@
 <script setup>
-import IconSendMessage from '@/components/icons/IconSendMessage.vue';
-import { ref } from 'vue';
-import { useChatStore } from '@/stores/chat.js';
+import IconSendMessage from '@/components/icons/IconSendMessage.vue'
+import { ref } from 'vue'
+import { useChatStore } from '@/stores/chat.js'
 
-const chatStore = useChatStore();
-const message = ref('');
+const chatStore = useChatStore()
+const message = ref('')
 const messages = ref([
   {
     user: 'Player 17',
-    message: 'Hello world!',
+    message: 'Hello world!'
   },
   {
     user: 'Player 1',
-    message: 'Lorem ipsum dolor sit amet',
+    message: 'Lorem ipsum dolor sit amet'
   },
   {
     user: 'Player 4',
-    message: 'Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus',
+    message: 'Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus'
   },
   {
     user: 'Player 6',
-    message: 'Class aptent taciti sociosqu',
+    message: 'Class aptent taciti sociosqu'
   },
   {
     user: 'Player 17',
-    message: 'Nunc consequat rutrum massa vitae',
+    message: 'Nunc consequat rutrum massa vitae'
   },
   {
     user: 'Player 4',
-    message: 'Suspendisse potenti.',
-  },
-]);
-const chatListRef = ref(null);
+    message: 'Suspendisse potenti.'
+  }
+])
+const chatListRef = ref(null)
 
 const sendMessage = () => {
   if (message.value) {
     messages.value.push({
       user: 'Player 17',
-      message: message.value,
-    });
-    message.value = '';
+      message: message.value
+    })
+    message.value = ''
     setTimeout(() => {
-      chatListRef.value.scrollTop = chatListRef.value.scrollHeight;
-    }, 100);
-
+      chatListRef.value.scrollTop = chatListRef.value.scrollHeight
+    }, 100)
   }
-};
+}
 </script>
 
 <template>
-  <div class="chat" :class="{'chat--open': chatStore.isOpen}">
+  <div class="chat" :class="{ 'chat--open': chatStore.isOpen }">
     <ul class="chat__list" ref="chatListRef">
-      <li v-for="(charRecord, index) in messages" :key="index"
-          class="chat__item" :class="{'chat__item--active-user': charRecord.user === 'Player 17'}">
-        <div class="chat__photo-holder">
-        </div>
+      <li
+        v-for="(charRecord, index) in messages"
+        :key="index"
+        class="chat__item"
+        :class="{ 'chat__item--active-user': charRecord.user === 'Player 17' }"
+      >
+        <div class="chat__photo-holder"></div>
         <div class="chat__message-holder">
           <span class="chat__user">{{ charRecord.user }}</span>
           <span class="chat__message">{{ charRecord.message }}</span>
@@ -62,9 +64,15 @@ const sendMessage = () => {
       </li>
     </ul>
     <div class="chat__input-holder">
-      <input v-model="message" @keyup.enter="sendMessage" type="text" class="chat__input" placeholder="Type here..">
+      <input
+        v-model="message"
+        @keyup.enter="sendMessage"
+        type="text"
+        class="chat__input"
+        placeholder="Type here.."
+      />
       <button class="chat__send-message" @click="sendMessage">
-        <IconSendMessage/>
+        <IconSendMessage />
       </button>
     </div>
   </div>
@@ -227,7 +235,7 @@ const sendMessage = () => {
   padding: 12px;
   margin: 0;
   box-sizing: border-box;
-  font-family: "Oswald", sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;

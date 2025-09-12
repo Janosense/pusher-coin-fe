@@ -1,47 +1,65 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import IconRoomEnter from '@/components/icons/IconRoomEnter.vue';
+import { onMounted, ref } from 'vue'
+import IconRoomEnter from '@/components/icons/IconRoomEnter.vue'
 
 const props = defineProps({
   view: {
     type: String,
-    default: 'landscape',
-  },
-});
+    default: 'landscape'
+  }
+})
 
-const rooms = ref([{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }, { id: 6 }, { id: 7 }, { id: 8 }]);
-const isRoomsOpen = ref(false);
+const rooms = ref([
+  { id: 1 },
+  { id: 2 },
+  { id: 3 },
+  { id: 4 },
+  { id: 5 },
+  { id: 6 },
+  { id: 7 },
+  { id: 8 }
+])
+const isRoomsOpen = ref(false)
 const toggleRooms = () => {
   if (props.view === 'sidebar') {
-    isRoomsOpen.value = !isRoomsOpen.value;
+    isRoomsOpen.value = !isRoomsOpen.value
   }
-};
+}
 
 onMounted(() => {
   if (document.documentElement.clientWidth >= 1024 || props.view !== 'sidebar') {
-    isRoomsOpen.value = true;
+    isRoomsOpen.value = true
   }
 
   window.addEventListener('resize', () => {
     if (document.documentElement.clientWidth >= 1024 || props.view !== 'sidebar') {
-      isRoomsOpen.value = true;
+      isRoomsOpen.value = true
     }
-  });
+  })
 })
-
 </script>
 
 <template>
-  <div class="rooms" :class="[{'rooms--open': isRoomsOpen}, `rooms--${props.view}`]" @click="toggleRooms">
+  <div
+    class="rooms"
+    :class="[{ 'rooms--open': isRoomsOpen }, `rooms--${props.view}`]"
+    @click="toggleRooms"
+  >
     <div class="wrapper rooms__wrapper">
       <ul class="rooms__list">
-        <li v-for="(room, index) in rooms" class="rooms__item" :key="room.id"
-            :style="{animationDelay: index / 10 + 's'}">
-          <div @click="() => isRoomsOpen ? $emit('onRoomClick', room.id) : null" class="rooms__link">
-            <div class="rooms__image-holder">
-            </div>
+        <li
+          v-for="(room, index) in rooms"
+          class="rooms__item"
+          :key="room.id"
+          :style="{ animationDelay: index / 10 + 's' }"
+        >
+          <div
+            @click="() => (isRoomsOpen ? $emit('onRoomClick', room.id) : null)"
+            class="rooms__link"
+          >
+            <div class="rooms__image-holder"></div>
             <span class="rooms__title">
-              Room {{ index + 1 }} <IconRoomEnter class="rooms__icon-enter"/>
+              Room {{ index + 1 }} <IconRoomEnter class="rooms__icon-enter" />
             </span>
           </div>
         </li>

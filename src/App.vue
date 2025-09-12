@@ -1,25 +1,23 @@
 <script setup>
 import { RouterView, useRoute } from 'vue-router'
-import NavigationToggle from "@/components/NavigationToggle.vue";
-import Navigation from "@/components/Navigation.vue";
+import NavigationToggle from '@/components/NavigationToggle.vue'
+import Navigation from '@/components/Navigation.vue'
 
-const route = useRoute();
+const route = useRoute()
 </script>
 
 <template>
-  <header class="header" :class="{'header--room': route.name === 'room'}">
+  <header class="header" :class="{ 'header--room': route.name === 'room' }">
     <div class="wrapper header__wrapper">
-      <NavigationToggle/>
+      <NavigationToggle />
       <div class="header__users-counter">100 Players</div>
     </div>
   </header>
-  <Navigation/>
+  <Navigation />
   <main>
     <RouterView />
   </main>
-  <footer>
-
-  </footer>
+  <footer></footer>
 </template>
 
 <style scoped>

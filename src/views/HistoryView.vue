@@ -1,6 +1,6 @@
 <script setup>
-import Queue from '@/components/Queue.vue';
-import IconCoin from '@/components/icons/IconCoin.vue';
+import Queue from '@/components/Queue.vue'
+import IconCoin from '@/components/icons/IconCoin.vue'
 </script>
 
 <template>
@@ -34,7 +34,7 @@ import IconCoin from '@/components/icons/IconCoin.vue';
         </div>
       </div>
     </div>
-    <Queue/>
+    <Queue />
   </div>
 </template>
 

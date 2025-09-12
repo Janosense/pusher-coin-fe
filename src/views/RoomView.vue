@@ -1,44 +1,54 @@
 <script setup>
-import UserControls from '@/components/UserControls.vue';
-import Queue from '@/components/Queue.vue';
-import Chat from '@/components/Chat.vue';
-import Overlay from '@/components/Overlay.vue';
-import ReplenishmentBalance from '@/components/ReplenishmentBalance.vue';
-import { ref } from 'vue';
-import PlaceBet from '@/components/PlaceBet.vue';
+import UserControls from '@/components/UserControls.vue'
+import Queue from '@/components/Queue.vue'
+import Chat from '@/components/Chat.vue'
+import Overlay from '@/components/Overlay.vue'
+import ReplenishmentBalance from '@/components/ReplenishmentBalance.vue'
+import { ref } from 'vue'
+import PlaceBet from '@/components/PlaceBet.vue'
 
-const isReplenishmentBalanceOverlayOpen = ref(false);
-const isPlaceBetOverlayOpen = ref(false);
+const isReplenishmentBalanceOverlayOpen = ref(false)
+const isPlaceBetOverlayOpen = ref(false)
 </script>
 
 <template>
   <div class="room-view">
-    <Chat/>
+    <Chat />
     <div class="room-view__layout">
       <div class="room-view__stream">
-        <iframe width="560" height="315"
-                src="https://www.youtube-nocookie.com/embed/oXvPA6l4pts?autoplay=1&controls=0&showinfo=0&mute=1"
-                title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; encrypted-media"
-                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube-nocookie.com/embed/oXvPA6l4pts?autoplay=1&controls=0&showinfo=0&mute=1"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; encrypted-media"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
       </div>
       <UserControls
-          @open-replenishment-balance-overlay="isReplenishmentBalanceOverlayOpen = true"
-          @open-place-bet-overlay="isPlaceBetOverlayOpen = true"
+        @open-replenishment-balance-overlay="isReplenishmentBalanceOverlayOpen = true"
+        @open-place-bet-overlay="isPlaceBetOverlayOpen = true"
       />
     </div>
-    <Queue/>
+    <Queue />
   </div>
-  <Overlay :is-overlay-open="isReplenishmentBalanceOverlayOpen"
-           @close-overlay="isReplenishmentBalanceOverlayOpen = false"
-           :title="'Replenish balance'"
-           :caption="'Your balance: 14 coins'">
-    <ReplenishmentBalance/>
+  <Overlay
+    :is-overlay-open="isReplenishmentBalanceOverlayOpen"
+    @close-overlay="isReplenishmentBalanceOverlayOpen = false"
+    :title="'Replenish balance'"
+    :caption="'Your balance: 14 coins'"
+  >
+    <ReplenishmentBalance />
   </Overlay>
-  <Overlay :is-overlay-open="isPlaceBetOverlayOpen"
-           @close-overlay="isPlaceBetOverlayOpen = false"
-           :title="'Place your bet'"
-           :caption="'Your balance: 14 coins'">
-    <PlaceBet/>
+  <Overlay
+    :is-overlay-open="isPlaceBetOverlayOpen"
+    @close-overlay="isPlaceBetOverlayOpen = false"
+    :title="'Place your bet'"
+    :caption="'Your balance: 14 coins'"
+  >
+    <PlaceBet />
   </Overlay>
 </template>
 

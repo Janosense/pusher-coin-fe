@@ -1,12 +1,12 @@
 <script setup>
-import Queue from '@/components/Queue.vue';
-import { useAuthenticationStore } from '@/stores/authentication.js';
-import IconAccount from '@/components/icons/IconAccount.vue';
-import Rooms from '@/components/Rooms.vue';
-import { useRouter } from 'vue-router';
+import Queue from '@/components/Queue.vue'
+import { useAuthenticationStore } from '@/stores/authentication.js'
+import IconAccount from '@/components/icons/IconAccount.vue'
+import Rooms from '@/components/Rooms.vue'
+import { useRouter } from 'vue-router'
 
-const router = useRouter();
-const authentication = useAuthenticationStore();
+const router = useRouter()
+const authentication = useAuthenticationStore()
 </script>
 
 <template>
@@ -20,7 +20,7 @@ const authentication = useAuthenticationStore();
           <div class="account">
             <div class="account__information">
               <div class="account__photo-holder">
-                <IconAccount/>
+                <IconAccount />
               </div>
               <span class="account__nickname">Player 17</span>
             </div>
@@ -45,12 +45,12 @@ const authentication = useAuthenticationStore();
                 </div>
                 <div class="form__item">
                   <label for="email" class="form__textfield-label"><sup>*</sup> Email</label>
-                  <input type="email" id="email" name="email" class="form__textfield" required>
+                  <input type="email" id="email" name="email" class="form__textfield" required />
                   <span class="form__verification">Verify</span>
                 </div>
                 <div class="form__item">
                   <label for="phone" class="form__textfield-label"><sup>*</sup> Phone</label>
-                  <input type="tel" id="phone" name="phone" class="form__textfield" required>
+                  <input type="tel" id="phone" name="phone" class="form__textfield" required />
                   <span class="form__verification form__verification--active">Verified</span>
                 </div>
                 <button class="form__submit button button--yellow"><span>Save</span></button>
@@ -63,13 +63,25 @@ const authentication = useAuthenticationStore();
                 </div>
                 <div class="form__item">
                   <label for="password" class="form__textfield-label"><sup>*</sup> Password</label>
-                  <input type="password" id="password" name="password" class="form__textfield"
-                         required>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form__textfield"
+                    required
+                  />
                 </div>
                 <div class="form__item">
-                  <label for="password-repeat" class="form__textfield-label"><sup>*</sup> Password repeat</label>
-                  <input type="password" id="password-repeat" name="password-repeat" class="form__textfield"
-                         required>
+                  <label for="password-repeat" class="form__textfield-label"
+                    ><sup>*</sup> Password repeat</label
+                  >
+                  <input
+                    type="password"
+                    id="password-repeat"
+                    name="password-repeat"
+                    class="form__textfield"
+                    required
+                  />
                 </div>
                 <button class="form__submit button button--yellow"><span>Save</span></button>
               </form>
@@ -78,8 +90,12 @@ const authentication = useAuthenticationStore();
         </div>
       </div>
     </div>
-    <Queue v-if="!authentication.isUserLoggedIn"/>
-    <Rooms v-else view="sidebar" @on-room-click="(roomId) => router.push({ name: 'room', params: { id: roomId } })"/>
+    <Queue v-if="!authentication.isUserLoggedIn" />
+    <Rooms
+      v-else
+      view="sidebar"
+      @on-room-click="(roomId) => router.push({ name: 'room', params: { id: roomId } })"
+    />
   </div>
 </template>
 
@@ -105,7 +121,7 @@ const authentication = useAuthenticationStore();
     display: block;
     width: 70%;
     height: 70%;
-    fill: var(--purple-light)
+    fill: var(--purple-light);
   }
 }
 
@@ -187,7 +203,7 @@ const authentication = useAuthenticationStore();
   margin: 0;
   padding: 16px 16px 16px 60px;
   box-sizing: border-box;
-  font-family: "Oswald", sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
   font-size: 16px;

@@ -1,40 +1,40 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import IMask from 'imask';
+import { onMounted, ref } from 'vue'
+import IMask from 'imask'
 
-const amount = ref(1);
-const amountInputRef = ref(null);
+const amount = ref(1)
+const amountInputRef = ref(null)
 
 const increaseAmount = () => {
   if (parseInt(amount.value)) {
-    amount.value++;
+    amount.value++
   } else {
-    amount.value = 1;
+    amount.value = 1
   }
-};
+}
 
 const decreaseAmount = () => {
   if (parseInt(amount.value)) {
-    amount.value = amount.value - 1 >= 0 ? amount.value - 1 : 0;
+    amount.value = amount.value - 1 >= 0 ? amount.value - 1 : 0
   } else {
-    amount.value = 0;
+    amount.value = 0
   }
-};
+}
 
 onMounted(() => {
   IMask(amountInputRef.value, {
     mask: Number,
     scale: 0,
-    min: 0,
-  });
-});
+    min: 0
+  })
+})
 </script>
 
 <template>
   <div class="place-bet">
     <div class="place-bet__amount">
       <button @click="decreaseAmount">-</button>
-      <input v-model="amount" ref="amountInputRef">
+      <input v-model="amount" ref="amountInputRef" />
       <button @click="increaseAmount">+</button>
     </div>
     <div class="place-bet__submit-holder">
@@ -67,7 +67,7 @@ onMounted(() => {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Oswald", sans-serif;
+    font-family: 'Oswald', sans-serif;
     font-optical-sizing: auto;
     font-weight: 500;
     font-style: normal;
@@ -96,7 +96,7 @@ onMounted(() => {
     padding: 12px;
     margin: 0;
     box-sizing: border-box;
-    font-family: "Oswald", sans-serif;
+    font-family: 'Oswald', sans-serif;
     font-optical-sizing: auto;
     font-weight: 500;
     font-style: normal;

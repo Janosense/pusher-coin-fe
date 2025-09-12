@@ -2,9 +2,9 @@
 @import '@/assets/styles/colors.css';
 
 /** Blocks */
-@import "@/assets/styles/blocks/body.css";
-@import "@/assets/styles/blocks/wrapper.css";
-@import "@/assets/styles/blocks/button.css";
-@import "@/assets/styles/blocks/content.css";
-@import "@/assets/styles/blocks/view-holder.css";
-@import "@/assets/styles/blocks/form.css";
+@import '@/assets/styles/blocks/body.css';
+@import '@/assets/styles/blocks/wrapper.css';
+@import '@/assets/styles/blocks/button.css';
+@import '@/assets/styles/blocks/content.css';
+@import '@/assets/styles/blocks/view-holder.css';
+@import '@/assets/styles/blocks/form.css';

@@ -1,14 +1,18 @@
 <script setup>
-import {ref} from 'vue';
+import { ref } from 'vue'
 
-import {useNavigationStore} from '@/stores/navigation.js'
+import { useNavigationStore } from '@/stores/navigation.js'
 
-const navigation = useNavigationStore();
+const navigation = useNavigationStore()
 </script>
 
 <template>
-  <button class="hamburger hamburger--arrow" :class="{'is-active': navigation.isNavigationOpen}" type="button"
-          @click="navigation.toggleNavigation">
+  <button
+    class="hamburger hamburger--arrow"
+    :class="{ 'is-active': navigation.isNavigationOpen }"
+    type="button"
+    @click="navigation.toggleNavigation"
+  >
     <span class="hamburger-box">
       <span class="hamburger-inner"></span>
     </span>
@@ -80,8 +84,9 @@ const navigation = useNavigationStore();
   transition-timing-function: ease;
 }
 
-.hamburger-inner::before, .hamburger-inner::after {
-  content: "";
+.hamburger-inner::before,
+.hamburger-inner::after {
+  content: '';
   display: block;
 }
 
@@ -103,5 +108,4 @@ const navigation = useNavigationStore();
 .hamburger--arrow.is-active .hamburger-inner::after {
   transform: translate3d(-6px, -1px, 0) rotate(45deg) scale(0.7, 1);
 }
-
 </style>

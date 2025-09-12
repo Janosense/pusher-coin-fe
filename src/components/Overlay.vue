@@ -1,19 +1,18 @@
 <script setup>
-import IconClose from '@/components/icons/IconClose.vue';
+import IconClose from '@/components/icons/IconClose.vue'
 
 const props = defineProps({
   isOverlayOpen: Boolean,
   title: String,
-  caption: String,
-});
-
+  caption: String
+})
 </script>
 
 <template>
-  <div class="overlay" :class="{'overlay--open': props.isOverlayOpen}">
+  <div class="overlay" :class="{ 'overlay--open': props.isOverlayOpen }">
     <div class="overlay__inner">
       <button class="overlay__close-button" @click="$emit('closeOverlay')">
-        <IconClose/>
+        <IconClose />
       </button>
       <div class="overlay__content">
         <h3 v-if="title" class="overlay__title">{{ title }}</h3>
