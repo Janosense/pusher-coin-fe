@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import userService from '../services/userService.js'
 
 const formData = ref({
   email: '',
@@ -20,47 +21,47 @@ const validateEmail = (email) => {
 
 const validateForm = () => {
   const newErrors = {}
-  
+
   // Required field validation
   if (!formData.value.email.trim()) {
     newErrors.email = 'Email is required'
   } else if (!validateEmail(formData.value.email)) {
     newErrors.email = 'Please enter a valid email address'
   }
-  
+
   if (!formData.value.nickname.trim()) {
     newErrors.nickname = 'Nickname is required'
   }
-  
+
   if (!formData.value.password) {
     newErrors.password = 'Password is required'
   } else if (formData.value.password.length < 6) {
     newErrors.password = 'Password must be at least 6 characters long'
   }
-  
+
   if (!formData.value.passwordRepeat) {
     newErrors.passwordRepeat = 'Password confirmation is required'
   } else if (formData.value.password !== formData.value.passwordRepeat) {
     newErrors.passwordRepeat = 'Passwords do not match'
   }
-  
+
   if (!formData.value.agreeToRules) {
     newErrors.agreeToRules = 'You must agree to the official rules'
   }
-  
+
   errors.value = newErrors
   return Object.keys(newErrors).length === 0
 }
 
 const handleSubmit = async (event) => {
   event.preventDefault()
-  
+
   if (!validateForm()) {
     return
   }
-  
+
   isLoading.value = true
-  
+
   try {
     // Create user object with collected data
     const userData = {
@@ -69,12 +70,12 @@ const handleSubmit = async (event) => {
       phone: formData.value.phone.trim(),
       password: formData.value.password
     }
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // console.log('User registration data:', userData)
-    
+
+    // Make API call to register the user
+    const response = await userService.signUp(userData)
+
+    console.log('Registration successful:', response)
+
     // Reset form after successful submission
     formData.value = {
       email: '',
@@ -85,12 +86,13 @@ const handleSubmit = async (event) => {
       agreeToRules: false
     }
     errors.value = {}
-    
-    // Here you would typically make an API call to register the user
-    // Example: await authService.register(userData)
-    
   } catch (error) {
-    errors.value.general = 'Registration failed. Please try again.'
+    // Handle registration errors with specific messages
+    if (error.name === 'RegistrationError') {
+      errors.value.general = error.message
+    } else {
+      errors.value.general = 'Registration failed. Please try again.'
+    }
     console.error('Registration error:', error)
   } finally {
     isLoading.value = false
@@ -98,11 +100,13 @@ const handleSubmit = async (event) => {
 }
 
 const isFormValid = computed(() => {
-  return formData.value.email && 
-         formData.value.nickname && 
-         formData.value.password && 
-         formData.value.passwordRepeat && 
-         formData.value.agreeToRules
+  return (
+    formData.value.email &&
+    formData.value.nickname &&
+    formData.value.password &&
+    formData.value.passwordRepeat &&
+    formData.value.agreeToRules
+  )
 })
 </script>
 
@@ -110,61 +114,98 @@ const isFormValid = computed(() => {
   <form @submit="handleSubmit" class="form">
     <div class="form__header">
       <span class="form__title">Sign Up</span> /
-      <RouterLink :to="{name: 'sign-in'}">Sign in</RouterLink>
+      <RouterLink :to="{ name: 'sign-in' }">Sign in</RouterLink>
     </div>
-    
+
     <!-- General error message -->
     <div v-if="errors.general" class="form__error form__error--general">
       {{ errors.general }}
     </div>
-    
+
     <div class="form__item">
       <label for="email" class="form__textfield-label"><sup>*</sup> Email</label>
-      <input type="email" id="email" name="email" class="form__textfield" 
-             v-model="formData.email" 
-             :class="{ 'form__textfield--error': errors.email }"
-             required>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        class="form__textfield"
+        v-model="formData.email"
+        :class="{ 'form__textfield--error': errors.email }"
+        required
+      />
       <div v-if="errors.email" class="form__error">{{ errors.email }}</div>
     </div>
     <div class="form__item">
       <label for="nickname" class="form__textfield-label"><sup>*</sup> Nickname</label>
-      <input type="text" id="nickname" name="nickname" class="form__textfield" 
-             v-model="formData.nickname" 
-             :class="{ 'form__textfield--error': errors.nickname }"
-             required>
+      <input
+        type="text"
+        id="nickname"
+        name="nickname"
+        class="form__textfield"
+        v-model="formData.nickname"
+        :class="{ 'form__textfield--error': errors.nickname }"
+        required
+      />
       <div v-if="errors.nickname" class="form__error">{{ errors.nickname }}</div>
     </div>
     <div class="form__item">
       <label for="phone" class="form__textfield-label">Phone</label>
-      <input type="tel" id="phone" name="phone" class="form__textfield" v-model="formData.phone" required>
+      <input
+        type="tel"
+        id="phone"
+        name="phone"
+        class="form__textfield"
+        v-model="formData.phone"
+        required
+      />
     </div>
     <div class="form__item">
       <label for="password" class="form__textfield-label"><sup>*</sup> Password</label>
-      <input type="password" id="password" name="password" class="form__textfield" 
-             v-model="formData.password"
-             :class="{ 'form__textfield--error': errors.password }"
-             required>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        class="form__textfield"
+        v-model="formData.password"
+        :class="{ 'form__textfield--error': errors.password }"
+        required
+      />
       <div v-if="errors.password" class="form__error">{{ errors.password }}</div>
     </div>
     <div class="form__item">
-      <label for="password-repeat" class="form__textfield-label"><sup>*</sup> Password repeat</label>
-      <input type="password" id="password-repeat" name="password-repeat" class="form__textfield" 
-             v-model="formData.passwordRepeat"
-             :class="{ 'form__textfield--error': errors.passwordRepeat }"
-             required>
+      <label for="password-repeat" class="form__textfield-label"
+        ><sup>*</sup> Password repeat</label
+      >
+      <input
+        type="password"
+        id="password-repeat"
+        name="password-repeat"
+        class="form__textfield"
+        v-model="formData.passwordRepeat"
+        :class="{ 'form__textfield--error': errors.passwordRepeat }"
+        required
+      />
       <div v-if="errors.passwordRepeat" class="form__error">{{ errors.passwordRepeat }}</div>
     </div>
     <div class="form__item">
       <label class="form__checkbox-label">
-        <input type="checkbox" name="rules" class="form__checkbox" v-model="formData.agreeToRules">
+        <input
+          type="checkbox"
+          name="rules"
+          class="form__checkbox"
+          v-model="formData.agreeToRules"
+        />
         <span class="form__checkbox-title">I agree with the <a href="">Official rules</a></span>
       </label>
       <div v-if="errors.agreeToRules" class="form__error">{{ errors.agreeToRules }}</div>
     </div>
     <div class="form__actions">
-      <button type="submit" class="button button--yellow form__submit" 
-              :disabled="isLoading || !isFormValid" 
-              :class="{ 'button--loading': isLoading }">
+      <button
+        type="submit"
+        class="button button--yellow form__submit"
+        :disabled="isLoading || !isFormValid"
+        :class="{ 'button--loading': isLoading }"
+      >
         <span v-if="!isLoading">Sign Up</span>
         <span v-else>Registering...</span>
       </button>

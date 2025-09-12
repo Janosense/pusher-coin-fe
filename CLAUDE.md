@@ -62,9 +62,11 @@ npm run generate    # Static site generation
 
 **pusher-coin**: Real-time gambling application
 - Uses WebSocket/Pusher for live chat functionality
-- Has authentication system with login forms
+- Has authentication system with login forms and user registration API
 - Includes betting and balance management components
 - Uses IMask for input formatting
+- API services located in `/src/services/` (axios-based with error handling)
+- User registration integrates with third-party WordPress API at `https://pusher-coin.ddev.site/wp-json/pc/v1`
 
 **vue-tutorial**: WordPress integration example
 - Has WordPress API service in `/src/services/wordpress.js`
