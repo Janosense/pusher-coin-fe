@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import userService from '../services/userService.js'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const formData = ref({
   email: '',
@@ -86,6 +89,7 @@ const handleSubmit = async (event) => {
       agreeToRules: false
     }
     errors.value = {}
+    await router.push({ name: 'sign-in' })
   } catch (error) {
     // Handle registration errors with specific messages
     if (error.name === 'RegistrationError') {

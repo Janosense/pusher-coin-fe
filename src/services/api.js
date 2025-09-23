@@ -9,12 +9,19 @@ const api = axios.create({
   }
 })
 
-// Request interceptor for logging and potential authentication
+// Request interceptor for logging and JWT authentication
 api.interceptors.request.use(
   (config) => {
+    // Add JWT token to requests if available
+    const token = localStorage.getItem('pusher_coin_auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+
     console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
       data: config.data,
-      headers: config.headers
+      headers: config.headers,
+      hasAuth: !!token
     })
     return config
   },
@@ -24,7 +31,7 @@ api.interceptors.request.use(
   }
 )
 
-// Response interceptor for logging and error handling
+// Response interceptor for logging, error handling, and token management
 api.interceptors.response.use(
   (response) => {
     console.log(`[API Response] ${response.status} ${response.config.url}`, response.data)
@@ -36,6 +43,19 @@ api.interceptors.response.use(
       data: error.response?.data,
       message: error.message
     })
+
+    // Handle token expiration (401 Unauthorized)
+    if (error.response?.status === 401) {
+      console.warn('[API] Token expired or invalid, clearing authentication')
+
+      // Clear stored authentication data
+      localStorage.removeItem('pusher_coin_auth_token')
+      localStorage.removeItem('pusher_coin_user_data')
+
+      // Dispatch custom event to notify authentication store
+      window.dispatchEvent(new CustomEvent('auth:token-expired'))
+    }
+
     return Promise.reject(error)
   }
 )

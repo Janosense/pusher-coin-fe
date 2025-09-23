@@ -1,8 +1,18 @@
 <script setup>
-import { useAuthenticationStore } from '@/stores/authentication.js'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import SignInForm from '@/components/SignInForm.vue'
 
-const authentication = useAuthenticationStore()
+const route = useRoute()
+
+// Create redirect object from query parameters
+const redirectInfo = computed(() => {
+  const redirectPath = route.query.redirect
+  if (redirectPath) {
+    return { path: redirectPath }
+  }
+  return null
+})
 </script>
 
 <template>
@@ -16,7 +26,7 @@ const authentication = useAuthenticationStore()
         </p>
       </div>
       <div class="content__form-holder">
-        <SignInForm />
+        <SignInForm :redirect="redirectInfo" />
       </div>
     </div>
   </div>

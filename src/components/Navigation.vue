@@ -1,12 +1,11 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import IconAccount from '@/components/icons/IconAccount.vue'
 import IconMain from '@/components/icons/IconMain.vue'
 import IconSupport from '@/components/icons/IconSupport.vue'
 import IconHistory from '@/components/icons/IconHistory.vue'
 import IconLogIn from '@/components/icons/IconLogIn.vue'
-import IconSettings from '@/components/icons/IconSettings.vue'
 import IconLogOut from '@/components/icons/IconLogOut.vue'
 import { useNavigationStore } from '@/stores/navigation.js'
 import { useAuthenticationStore } from '@/stores/authentication.js'
@@ -16,6 +15,13 @@ import IconSignUp from '@/components/icons/IconSignUp.vue'
 const navigationStore = useNavigationStore()
 const authentication = useAuthenticationStore()
 const route = useRoute()
+
+// Handle logout
+const handleLogout = () => {
+  console.log('[Navigation] User logout requested')
+  authentication.logout()
+  navigationStore.closeNavigation()
+}
 
 watch(
   () => route.name,
@@ -35,13 +41,13 @@ watch(
           <span class="navigation__title">Main</span>
         </RouterLink>
       </li>
-      <li v-if="authentication.isUserLoggedIn" class="navigation__item">
+      <li v-if="authentication.isAuthenticated" class="navigation__item">
         <RouterLink :to="{ name: 'account' }" class="navigation__link">
           <IconAccount class="navigation__icon" />
           <span class="navigation__title">Account</span>
         </RouterLink>
       </li>
-      <li v-if="authentication.isUserLoggedIn" class="navigation__item">
+      <li v-if="authentication.isAuthenticated" class="navigation__item">
         <RouterLink :to="{ name: 'history' }" class="navigation__link">
           <IconHistory class="navigation__icon" />
           <span class="navigation__title">History</span>
@@ -53,20 +59,20 @@ watch(
           <span class="navigation__title">Support</span>
         </RouterLink>
       </li>
-      <li v-if="!authentication.isUserLoggedIn" class="navigation__item">
+      <li v-if="!authentication.isAuthenticated" class="navigation__item">
         <RouterLink :to="{ name: 'sign-in' }" class="navigation__link">
           <IconLogIn class="navigation__icon" />
           <span class="navigation__title">Sign in</span>
         </RouterLink>
       </li>
-      <li v-if="!authentication.isUserLoggedIn" class="navigation__item">
+      <li v-if="!authentication.isAuthenticated" class="navigation__item">
         <RouterLink :to="{ name: 'sign-up' }" class="navigation__link">
           <IconSignUp class="navigation__icon" />
           <span class="navigation__title">Sign up</span>
         </RouterLink>
       </li>
-      <li v-if="authentication.isUserLoggedIn" class="navigation__item">
-        <a href="#" class="navigation__link">
+      <li v-if="authentication.isAuthenticated" class="navigation__item">
+        <a href="#" class="navigation__link" @click.prevent="handleLogout">
           <IconLogOut class="navigation__icon" />
           <span class="navigation__title">Log out</span>
         </a>
