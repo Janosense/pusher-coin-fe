@@ -129,14 +129,19 @@ const handleFieldInput = (field) => {
 // Computed properties for form state
 const canSubmit = computed(() => {
   return formData.value.username.trim() &&
-         formData.value.password &&
-         !isSubmitting.value &&
-         !hasFieldErrors.value
+    formData.value.password &&
+    !isSubmitting.value &&
+    !hasFieldErrors.value
 })
 
 const displayError = computed(() => {
   return submitError.value || authenticationStore.error
 })
+
+const onSignIn = (googleUser) => {
+  const profile = googleUser.getBasicProfile()
+  console.log(profile)
+}
 </script>
 
 <template>
@@ -145,6 +150,7 @@ const displayError = computed(() => {
       <span class="form__title">Sign in</span> /
       <RouterLink :to="{ name: 'sign-up' }">Sign Up</RouterLink>
     </div>
+    <div class="g-signin2" data-onsuccess="onSignIn"></div>
 
     <!-- Error message display -->
     <div v-if="displayError" class="form__error" role="alert">
