@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Create separate axios instance for JWT authentication
 const authApi = axios.create({
-  baseURL: 'https://pusher-coin.ddev.site/wp-json/jwt-auth/v1',
+  baseURL: import.meta.env.VITE_JWT_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
