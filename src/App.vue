@@ -4,6 +4,12 @@ import NavigationToggle from '@/components/NavigationToggle.vue'
 import Navigation from '@/components/Navigation.vue'
 
 const route = useRoute()
+if (import.meta.env) {
+  // code inside here will be tree-shaken in production builds
+  console.log('Dev mode')
+}else {
+  console.log('PROD mode')
+}
 </script>
 
 <template>
