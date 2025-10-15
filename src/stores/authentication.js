@@ -261,7 +261,6 @@ export const useAuthenticationStore = defineStore('authentication', () => {
 
     // Actions
     login,
-    loginWithGoogle,
     logout,
     validateToken,
     refreshToken,
