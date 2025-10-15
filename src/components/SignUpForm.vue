@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import userService from '../services/userService.js'
 import { useRouter } from 'vue-router'
+import GoogleSignInButton from './GoogleSignInButton.vue'
 
 const router = useRouter()
 
@@ -121,6 +122,13 @@ const isFormValid = computed(() => {
       <RouterLink :to="{ name: 'sign-in' }">Sign in</RouterLink>
     </div>
 
+    <!-- Google Sign-Up Button -->
+    <GoogleSignInButton button-text="signup_with" />
+
+    <div class="form__divider">
+      <span class="form__divider-text">Or sign up with email</span>
+    </div>
+
     <!-- General error message -->
     <div v-if="errors.general" class="form__error form__error--general">
       {{ errors.general }}
@@ -218,6 +226,31 @@ const isFormValid = computed(() => {
 </template>
 
 <style scoped>
+.form__divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.form__divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--purple-light);
+}
+
+.form__divider-text {
+  position: relative;
+  display: inline-block;
+  padding: 0 16px;
+  background-color: var(--purple-dark);
+  color: var(--purple-light);
+  font-size: 16px;
+}
+
 .form__error {
   color: #ff4444;
   font-size: 0.875rem;

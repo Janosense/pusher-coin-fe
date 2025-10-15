@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 import { useRouter } from 'vue-router'
+import GoogleSignInButton from './GoogleSignInButton.vue'
 
 const authenticationStore = useAuthenticationStore()
 const router = useRouter()
@@ -146,6 +147,13 @@ const displayError = computed(() => {
       <RouterLink :to="{ name: 'sign-up' }">Sign Up</RouterLink>
     </div>
 
+    <!-- Google Sign-In Button -->
+    <GoogleSignInButton :redirect="redirect" button-text="signin_with" />
+
+    <div class="form__divider">
+      <span class="form__divider-text">Or sign in with email</span>
+    </div>
+
     <!-- Error message display -->
     <div v-if="displayError" class="form__error" role="alert">
       {{ displayError }}
@@ -210,6 +218,31 @@ const displayError = computed(() => {
 </template>
 
 <style scoped>
+.form__divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.form__divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--purple-light);
+}
+
+.form__divider-text {
+  position: relative;
+  display: inline-block;
+  padding: 0 16px;
+  background-color: var(--purple-dark);
+  color: var(--purple-light);
+  font-size: 16px;
+}
+
 .form__error {
   background-color: #fee2e2;
   border: 1px solid #fecaca;

@@ -220,6 +220,14 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     }
   }
 
+  const setUser = (userData) => {
+    user.value = userData
+  }
+
+  const setToken = (tokenData) => {
+    token.value = tokenData
+  }
+
   // Listen for token expiration events from API interceptors
   const handleTokenExpiration = () => {
     console.log('[Auth Store] Received token expiration event')
@@ -261,6 +269,10 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     checkAuthStatus,
 
     // Legacy method for backward compatibility
-    authenticateUser
+    authenticateUser,
+
+    setUser,
+    setToken,
+
   }
 })
