@@ -107,6 +107,36 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     }
   }
 
+  const loginWithGoogle = async (authResult) => {
+    try {
+      clearError()
+      setLoading(true)
+
+      if (authResult.success) {
+        token.value = authResult.token
+        user.value = authResult.user
+
+        // Save to localStorage
+        saveToLocalStorage(authResult.token, authResult.user)
+
+        console.log('[Auth Store] Google login successful for user:', authResult.user.username)
+        return { success: true, user: authResult.user }
+      } else {
+        throw new Error('Google login failed')
+      }
+    } catch (err) {
+      console.error('[Auth Store] Google login error:', err.message)
+      error.value = err.message
+
+      // Clear any partial auth data
+      logout(false)
+
+      return { success: false, error: err.message }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const logout = (redirect = true) => {
     console.log('[Auth Store] Logging out user')
 
@@ -253,6 +283,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
 
     // Actions
     login,
+    loginWithGoogle,
     logout,
     validateToken,
     refreshToken,
