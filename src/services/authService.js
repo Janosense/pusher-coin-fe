@@ -1,5 +1,13 @@
 import axios from 'axios'
 
+const userApi = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
 // Create separate axios instance for JWT authentication
 const authApi = axios.create({
   baseURL: import.meta.env.VITE_JWT_BASE_URL,
@@ -155,6 +163,114 @@ export const authService = {
     } catch (error) {
       console.warn('[Auth Service] Token refresh failed:', error.message)
       throw new Error('Unable to refresh token. Please login again')
+    }
+  },
+
+  /**
+   * Request verification code - Step 1 of two-step authentication
+   * @param {string} username - User's username or email
+   * @param {string} password - User's password
+   * @returns {Promise<Object>} Response indicating code was sent
+   */
+  async requestVerification(username, password) {
+    try {
+      // Validate input parameters
+      if (!username || !password) {
+        throw new Error('Username and password are required')
+      }
+
+      // Make request to send verification code
+      const response = await userApi.post('/user/request-verification/', {
+        login: username.trim(),
+        password: password
+      })
+
+      // Check if verification code was sent successfully
+      if (response.data && response.data.success) {
+        return {
+          success: true,
+          message: response.data.message || 'Verification code sent successfully'
+        }
+      } else {
+        throw new Error(response.data?.message || 'Failed to send verification code')
+      }
+    } catch (error) {
+      // Handle different types of errors
+      if (error.status === 401) {
+        throw new Error('Invalid username or password')
+      } else if (error.status === 429) {
+        throw new Error('Too many requests. Please try again later')
+      } else if (error.status >= 500) {
+        throw new Error('Server error. Please try again later')
+      } else if (error.code === 'ECONNABORTED') {
+        throw new Error('Request timed out. Please check your connection')
+      } else if (!navigator.onLine) {
+        throw new Error('No internet connection. Please check your network')
+      }
+
+      // Re-throw the error if it's already been processed
+      throw error
+    }
+  },
+
+  /**
+   * Verify code and complete authentication - Step 2 of two-step authentication
+   * @param {string} username - User's username or email
+   * @param {string} password - User's password
+   * @param {string} code - 6-digit verification code
+   * @returns {Promise<Object>} Authentication response with token and user data
+   */
+  async verifyCode(username, password, code) {
+    try {
+      // Validate input parameters
+      if (!username || !password || !code) {
+        throw new Error('Username, password, and verification code are required')
+      }
+
+      // Validate code format (6 digits)
+      if (!/^\d{6}$/.test(code)) {
+        throw new Error('Verification code must be 6 digits')
+      }
+
+      // Make verification request
+      const response = await userApi.post('/user/verify-code/', {
+        login: username.trim(),
+        password: password,
+        code: code
+      })
+
+      // Validate response structure
+      if (!response.data || !response.data.token) {
+        throw new Error('Invalid response format from authentication server')
+      }
+
+      return {
+        success: true,
+        token: response.data.token,
+        user: {
+          id: response.data.user_id,
+          username: response.data.user_nicename,
+          email: response.data.user_email,
+          displayName: response.data.user_display_name
+        },
+        tokenExpires: response.data.token_expires || null
+      }
+    } catch (error) {
+      // Handle different types of errors
+      if (error.status === 401) {
+        throw new Error('Invalid verification code or credentials')
+      } else if (error.status === 429) {
+        throw new Error('Too many verification attempts. Please try again later')
+      } else if (error.status >= 500) {
+        throw new Error('Server error. Please try again later')
+      } else if (error.code === 'ECONNABORTED') {
+        throw new Error('Request timed out. Please check your connection')
+      } else if (!navigator.onLine) {
+        throw new Error('No internet connection. Please check your network')
+      }
+
+      // Re-throw the error if it's already been processed
+      throw error
     }
   }
 }

@@ -107,6 +107,56 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     }
   }
 
+  const requestVerification = async (username, password) => {
+    try {
+      clearError()
+      setLoading(true)
+
+      const response = await authService.requestVerification(username, password)
+
+      if (response.success) {
+        console.log('[Auth Store] Verification code requested successfully')
+        return { success: true, message: response.message }
+      } else {
+        throw new Error('Failed to request verification code')
+      }
+    } catch (err) {
+      console.error('[Auth Store] Request verification error:', err.message)
+      error.value = err.message
+      return { success: false, error: err.message }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const verifyCode = async (username, password, code) => {
+    try {
+      clearError()
+      setLoading(true)
+
+      const response = await authService.verifyCode(username, password, code)
+
+      if (response.success) {
+        token.value = response.token
+        user.value = response.user
+
+        // Save to localStorage
+        saveToLocalStorage(response.token, response.user)
+
+        console.log('[Auth Store] Verification successful for user:', response.user.username)
+        return { success: true, user: response.user }
+      } else {
+        throw new Error('Verification failed')
+      }
+    } catch (err) {
+      console.error('[Auth Store] Verify code error:', err.message)
+      error.value = err.message
+      return { success: false, error: err.message }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const logout = (redirect = true) => {
     console.log('[Auth Store] Logging out user')
 
@@ -267,6 +317,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     initializeAuth,
     clearError,
     checkAuthStatus,
+    requestVerification,
+    verifyCode,
 
     // Legacy method for backward compatibility
     authenticateUser,

@@ -11,20 +11,29 @@ const props = defineProps({
   redirect: Object
 })
 
+// Form step management
+const currentStep = ref(1) // 1 = credentials, 2 = verification code
+
 // Form data
 const formData = ref({
   username: '',
-  password: ''
+  password: '',
+  verificationCode: ''
 })
 
 // Form validation state
 const fieldErrors = ref({
   username: '',
-  password: ''
+  password: '',
+  verificationCode: ''
 })
 
 const hasFieldErrors = computed(() => {
-  return fieldErrors.value.username || fieldErrors.value.password
+  if (currentStep.value === 1) {
+    return fieldErrors.value.username || fieldErrors.value.password
+  } else {
+    return fieldErrors.value.verificationCode
+  }
 })
 
 // Form state
@@ -35,6 +44,7 @@ const submitError = ref('')
 const clearErrors = () => {
   fieldErrors.value.username = ''
   fieldErrors.value.password = ''
+  fieldErrors.value.verificationCode = ''
   submitError.value = ''
   authenticationStore.clearError()
 }
@@ -59,12 +69,25 @@ const validateField = (field) => {
         fieldErrors.value.password = ''
       }
       break
+    case 'verificationCode':
+      if (!formData.value.verificationCode) {
+        fieldErrors.value.verificationCode = 'Verification code is required'
+      } else if (!/^\d{6}$/.test(formData.value.verificationCode)) {
+        fieldErrors.value.verificationCode = 'Code must be 6 digits'
+      } else {
+        fieldErrors.value.verificationCode = ''
+      }
+      break
   }
 }
 
 const validateForm = () => {
-  validateField('username')
-  validateField('password')
+  if (currentStep.value === 1) {
+    validateField('username')
+    validateField('password')
+  } else {
+    validateField('verificationCode')
+  }
   return !hasFieldErrors.value
 }
 
@@ -79,33 +102,51 @@ const handleSubmit = async () => {
   try {
     isSubmitting.value = true
 
-    // Attempt login
-    const result = await authenticationStore.login(
-      formData.value.username.trim(),
-      formData.value.password
-    )
+    if (currentStep.value === 1) {
+      // Step 1: Request verification code
+      const result = await authenticationStore.requestVerification(
+        formData.value.username.trim(),
+        formData.value.password
+      )
 
-    if (result.success) {
-      // Clear form data for security
-      formData.value.username = ''
-      formData.value.password = ''
-
-      // Navigate to redirect route or dashboard
-      const redirectRoute = props.redirect?.path || props.redirect?.name || '/'
-
-      try {
-        if (typeof redirectRoute === 'string') {
-          await router.push(redirectRoute)
-        } else {
-          await router.push(redirectRoute)
-        }
-      } catch (navError) {
-        console.warn('[SignInForm] Navigation error:', navError.message)
-        // Fallback to home
-        await router.push('/')
+      if (result.success) {
+        // Move to step 2
+        currentStep.value = 2
+        console.log('[SignInForm] Verification code sent, moving to step 2')
+      } else {
+        submitError.value = result.error || 'Failed to send verification code. Please try again.'
       }
     } else {
-      submitError.value = result.error || 'Login failed. Please try again.'
+      // Step 2: Verify code and complete login
+      const result = await authenticationStore.verifyCode(
+        formData.value.username.trim(),
+        formData.value.password,
+        formData.value.verificationCode
+      )
+
+      if (result.success) {
+        // Clear form data for security
+        formData.value.username = ''
+        formData.value.password = ''
+        formData.value.verificationCode = ''
+
+        // Navigate to redirect route or dashboard
+        const redirectRoute = props.redirect?.path || props.redirect?.name || '/'
+
+        try {
+          if (typeof redirectRoute === 'string') {
+            await router.push(redirectRoute)
+          } else {
+            await router.push(redirectRoute)
+          }
+        } catch (navError) {
+          console.warn('[SignInForm] Navigation error:', navError.message)
+          // Fallback to home
+          await router.push('/')
+        }
+      } else {
+        submitError.value = result.error || 'Verification failed. Please try again.'
+      }
     }
   } catch (error) {
     console.error('[SignInForm] Submit error:', error)
@@ -113,6 +154,13 @@ const handleSubmit = async () => {
   } finally {
     isSubmitting.value = false
   }
+}
+
+const goBackToCredentials = () => {
+  currentStep.value = 1
+  formData.value.verificationCode = ''
+  fieldErrors.value.verificationCode = ''
+  clearErrors()
 }
 
 const handleFieldInput = (field) => {
@@ -129,14 +177,27 @@ const handleFieldInput = (field) => {
 
 // Computed properties for form state
 const canSubmit = computed(() => {
-  return formData.value.username.trim() &&
-    formData.value.password &&
-    !isSubmitting.value &&
-    !hasFieldErrors.value
+  if (currentStep.value === 1) {
+    return formData.value.username.trim() &&
+      formData.value.password &&
+      !isSubmitting.value &&
+      !hasFieldErrors.value
+  } else {
+    return formData.value.verificationCode &&
+      !isSubmitting.value &&
+      !hasFieldErrors.value
+  }
 })
 
 const displayError = computed(() => {
   return submitError.value || authenticationStore.error
+})
+
+const submitButtonText = computed(() => {
+  if (isSubmitting.value) {
+    return currentStep.value === 1 ? 'Sending Code...' : 'Verifying...'
+  }
+  return currentStep.value === 1 ? 'Continue' : 'Sign In'
 })
 </script>
 
@@ -147,61 +208,112 @@ const displayError = computed(() => {
       <RouterLink :to="{ name: 'sign-up' }">Sign Up</RouterLink>
     </div>
 
-    <!-- Google Sign-In Button -->
-    <GoogleSignInButton :redirect="redirect" button-text="signin_with" />
+    <!-- Step 1: Username and Password -->
+    <template v-if="currentStep === 1">
+      <!-- Google Sign-In Button -->
+      <GoogleSignInButton :redirect="redirect" button-text="signin_with" />
 
-    <div class="form__divider">
-      <span class="form__divider-text">Or sign in with email</span>
-    </div>
-
-    <!-- Error message display -->
-    <div v-if="displayError" class="form__error" role="alert">
-      {{ displayError }}
-    </div>
-
-    <div class="form__item">
-      <label for="username" class="form__textfield-label">
-        <sup>*</sup> Username or Email
-      </label>
-      <input
-        type="text"
-        id="username"
-        name="username"
-        class="form__textfield"
-        :class="{ 'form__textfield--error': fieldErrors.username }"
-        v-model="formData.username"
-        @input="handleFieldInput('username')"
-        @blur="validateField('username')"
-        :disabled="isSubmitting"
-        required
-        autocomplete="username"
-      />
-      <div v-if="fieldErrors.username" class="form__field-error" role="alert">
-        {{ fieldErrors.username }}
+      <div class="form__divider">
+        <span class="form__divider-text">Or sign in with email</span>
       </div>
-    </div>
 
-    <div class="form__item">
-      <label for="password" class="form__textfield-label">
-        <sup>*</sup> Password
-      </label>
-      <input
-        type="password"
-        id="password"
-        name="password"
-        class="form__textfield"
-        :class="{ 'form__textfield--error': fieldErrors.password }"
-        v-model="formData.password"
-        @input="handleFieldInput('password')"
-        @blur="validateField('password')"
-        :disabled="isSubmitting"
-        required
-        autocomplete="current-password"
-      />
-      <div v-if="fieldErrors.password" class="form__field-error" role="alert">
-        {{ fieldErrors.password }}
+      <!-- Error message display -->
+      <div v-if="displayError" class="form__error" role="alert">
+        {{ displayError }}
       </div>
-    </div>
+
+      <div class="form__item">
+        <label for="username" class="form__textfield-label">
+          <sup>*</sup> Username or Email
+        </label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="form__textfield"
+          :class="{ 'form__textfield--error': fieldErrors.username }"
+          v-model="formData.username"
+          @input="handleFieldInput('username')"
+          @blur="validateField('username')"
+          :disabled="isSubmitting"
+          required
+          autocomplete="username"
+        />
+        <div v-if="fieldErrors.username" class="form__field-error" role="alert">
+          {{ fieldErrors.username }}
+        </div>
+      </div>
+
+      <div class="form__item">
+        <label for="password" class="form__textfield-label">
+          <sup>*</sup> Password
+        </label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="form__textfield"
+          :class="{ 'form__textfield--error': fieldErrors.password }"
+          v-model="formData.password"
+          @input="handleFieldInput('password')"
+          @blur="validateField('password')"
+          :disabled="isSubmitting"
+          required
+          autocomplete="current-password"
+        />
+        <div v-if="fieldErrors.password" class="form__field-error" role="alert">
+          {{ fieldErrors.password }}
+        </div>
+      </div>
+    </template>
+
+    <!-- Step 2: Verification Code -->
+    <template v-else>
+      <!-- Error message display -->
+      <div v-if="displayError" class="form__error" role="alert">
+        {{ displayError }}
+      </div>
+
+      <div class="form__info-message">
+        A 6-digit verification code has been sent. Please enter it below to complete sign in.
+      </div>
+
+      <div class="form__item">
+        <label for="verificationCode" class="form__textfield-label">
+          <sup>*</sup> Verification Code
+        </label>
+        <input
+          type="text"
+          id="verificationCode"
+          name="verificationCode"
+          class="form__textfield"
+          :class="{ 'form__textfield--error': fieldErrors.verificationCode }"
+          v-model="formData.verificationCode"
+          @input="handleFieldInput('verificationCode')"
+          @blur="validateField('verificationCode')"
+          :disabled="isSubmitting"
+          required
+          maxlength="6"
+          pattern="\d{6}"
+          placeholder="000000"
+          autocomplete="one-time-code"
+        />
+        <div v-if="fieldErrors.verificationCode" class="form__field-error" role="alert">
+          {{ fieldErrors.verificationCode }}
+        </div>
+      </div>
+
+      <div class="form__back-link">
+        <button
+          type="button"
+          @click="goBackToCredentials"
+          class="form__link-button"
+          :disabled="isSubmitting"
+        >
+          Back to login
+        </button>
+      </div>
+    </template>
 
     <div class="form__actions">
       <button
@@ -210,8 +322,7 @@ const displayError = computed(() => {
         :class="{ 'button--loading': isSubmitting }"
         :disabled="!canSubmit"
       >
-        <span v-if="!isSubmitting">Sign In</span>
-        <span v-else>Signing In...</span>
+        {{ submitButtonText }}
       </button>
     </div>
   </form>
@@ -253,6 +364,17 @@ const displayError = computed(() => {
   font-size: 0.875rem;
 }
 
+.form__info-message {
+  background-color: #dbeafe;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
 .form__textfield--error {
   border-color: #dc2626 !important;
   box-shadow: 0 0 0 1px #dc2626;
@@ -262,6 +384,31 @@ const displayError = computed(() => {
   color: #dc2626;
   font-size: 0.75rem;
   margin-top: 0.25rem;
+}
+
+.form__back-link {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.form__link-button {
+  background: none;
+  border: none;
+  color: var(--yellow);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  transition: opacity 0.2s;
+}
+
+.form__link-button:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.form__link-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .button--loading {
