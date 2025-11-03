@@ -14,6 +14,10 @@ export const useAuthenticationStore = defineStore('authentication', () => {
   const error = ref(null)
   const isInitialized = ref(false)
 
+  // Google 2FA state
+  const pendingGoogleAuth = ref(false)
+  const googleIdToken = ref(null)
+
   const router = useRouter()
 
   // Getters
@@ -30,6 +34,11 @@ export const useAuthenticationStore = defineStore('authentication', () => {
   // Actions
   const clearError = () => {
     error.value = null
+  }
+
+  const clearGoogleAuthState = () => {
+    pendingGoogleAuth.value = false
+    googleIdToken.value = null
   }
 
   const setLoading = (loading) => {
@@ -157,6 +166,64 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     }
   }
 
+  const requestGoogleVerification = async (idToken) => {
+    try {
+      clearError()
+      setLoading(true)
+
+      // Store the Google ID token for later verification
+      googleIdToken.value = idToken
+      pendingGoogleAuth.value = true
+
+      console.log('[Auth Store] Google verification code requested successfully')
+      return { success: true, message: 'Verification code sent' }
+    } catch (err) {
+      console.error('[Auth Store] Request Google verification error:', err.message)
+      error.value = err.message
+      clearGoogleAuthState()
+      return { success: false, error: err.message }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const verifyGoogleCode = async (code) => {
+    try {
+      clearError()
+      setLoading(true)
+
+      if (!googleIdToken.value) {
+        throw new Error('No pending Google authentication')
+      }
+
+      // Import googleAuthService dynamically to avoid circular dependencies
+      const { default: googleAuthService } = await import('@/services/googleAuthService.js')
+      const response = await googleAuthService.verifyCode(googleIdToken.value, code)
+
+      if (response.success) {
+        token.value = response.token
+        user.value = response.user
+
+        // Save to localStorage
+        saveToLocalStorage(response.token, response.user)
+
+        // Clear Google auth state
+        clearGoogleAuthState()
+
+        console.log('[Auth Store] Google verification successful for user:', response.user.username)
+        return { success: true, user: response.user }
+      } else {
+        throw new Error('Verification failed')
+      }
+    } catch (err) {
+      console.error('[Auth Store] Verify Google code error:', err.message)
+      error.value = err.message
+      return { success: false, error: err.message }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const logout = (redirect = true) => {
     console.log('[Auth Store] Logging out user')
 
@@ -164,6 +231,9 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     user.value = null
     token.value = null
     error.value = null
+
+    // Clear Google auth state
+    clearGoogleAuthState()
 
     // Clear localStorage
     clearLocalStorage()
@@ -299,6 +369,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     isLoading: computed(() => isLoading.value),
     error: computed(() => error.value),
     isInitialized: computed(() => isInitialized.value),
+    pendingGoogleAuth: computed(() => pendingGoogleAuth.value),
+    googleIdToken: computed(() => googleIdToken.value),
 
     // Getters
     isAuthenticated,
@@ -316,9 +388,12 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     refreshToken,
     initializeAuth,
     clearError,
+    clearGoogleAuthState,
     checkAuthStatus,
     requestVerification,
     verifyCode,
+    requestGoogleVerification,
+    verifyGoogleCode,
 
     // Legacy method for backward compatibility
     authenticateUser,

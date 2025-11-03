@@ -118,11 +118,23 @@ const handleSubmit = async () => {
       }
     } else {
       // Step 2: Verify code and complete login
-      const result = await authenticationStore.verifyCode(
-        formData.value.username.trim(),
-        formData.value.password,
-        formData.value.verificationCode
-      )
+      // Check if this is Google authentication or email authentication
+      const isGoogleAuth = authenticationStore.pendingGoogleAuth
+
+      let result
+      if (isGoogleAuth) {
+        // Google authentication flow
+        console.log('[SignInForm] Verifying Google authentication code')
+        result = await authenticationStore.verifyGoogleCode(formData.value.verificationCode)
+      } else {
+        // Email authentication flow
+        console.log('[SignInForm] Verifying email authentication code')
+        result = await authenticationStore.verifyCode(
+          formData.value.username.trim(),
+          formData.value.password,
+          formData.value.verificationCode
+        )
+      }
 
       if (result.success) {
         // Clear form data for security
@@ -161,6 +173,17 @@ const goBackToCredentials = () => {
   formData.value.verificationCode = ''
   fieldErrors.value.verificationCode = ''
   clearErrors()
+
+  // Clear Google auth state if going back
+  if (authenticationStore.pendingGoogleAuth) {
+    authenticationStore.clearGoogleAuthState()
+  }
+}
+
+const handleGoogleRequires2FA = () => {
+  // Google authentication requires 2FA, show step 2
+  console.log('[SignInForm] Google authentication requires 2FA, showing verification step')
+  currentStep.value = 2
 }
 
 const handleFieldInput = (field) => {
@@ -211,7 +234,11 @@ const submitButtonText = computed(() => {
     <!-- Step 1: Username and Password -->
     <template v-if="currentStep === 1">
       <!-- Google Sign-In Button -->
-      <GoogleSignInButton :redirect="redirect" button-text="signin_with" />
+      <GoogleSignInButton
+        :redirect="redirect"
+        button-text="signin_with"
+        @requires2FA="handleGoogleRequires2FA"
+      />
 
       <div class="form__divider">
         <span class="form__divider-text">Or sign in with email</span>

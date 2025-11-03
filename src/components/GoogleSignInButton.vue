@@ -19,6 +19,8 @@ const buttonContainer = ref(null)
 const isLoading = ref(false)
 const error = ref('')
 
+const emit = defineEmits(['requires2FA'])
+
 /**
  * Handle credential response from Google
  * This is called when user successfully signs in with Google
@@ -34,25 +36,39 @@ const handleCredentialResponse = async (response) => {
     const authResult = await googleAuthService.authenticateWithBackend(response.credential)
 
     if (authResult.success) {
-      console.log(authResult)
-      // Store authentication data
-      authenticationStore.setUser(authResult.user)
-      authenticationStore.setToken(authResult.token)
+      // Check if 2FA is required
+      if (authResult.requires2FA) {
+        console.log('[GoogleSignInButton] 2FA required, storing token and showing verification step')
 
-      // Persist to localStorage
-      localStorage.setItem('pusher_coin_auth_token', authResult.token)
-      localStorage.setItem('pusher_coin_user_data', JSON.stringify(authResult.user))
+        // Store the Google ID token in the auth store
+        await authenticationStore.requestGoogleVerification(authResult.idToken)
 
-      console.log('[GoogleSignInButton] Authentication successful:', authResult.user.username)
+        // Emit event to show step 2 of the form
+        emit('requires2FA')
 
-      // Navigate to the redirect route or home
-      const redirectRoute = props.redirect?.path || props.redirect?.name || '/'
+        console.log('[GoogleSignInButton] Verification step triggered')
+      } else {
+        // Direct login without 2FA
+        console.log(authResult)
+        // Store authentication data
+        authenticationStore.setUser(authResult.user)
+        authenticationStore.setToken(authResult.token)
 
-      try {
-        await router.push(redirectRoute)
-      } catch (navError) {
-        console.warn('[GoogleSignInButton] Navigation warning:', navError.message)
-        await router.push('/')
+        // Persist to localStorage
+        localStorage.setItem('pusher_coin_auth_token', authResult.token)
+        localStorage.setItem('pusher_coin_user_data', JSON.stringify(authResult.user))
+
+        console.log('[GoogleSignInButton] Authentication successful:', authResult.user.username)
+
+        // Navigate to the redirect route or home
+        const redirectRoute = props.redirect?.path || props.redirect?.name || '/'
+
+        try {
+          await router.push(redirectRoute)
+        } catch (navError) {
+          console.warn('[GoogleSignInButton] Navigation warning:', navError.message)
+          await router.push('/')
+        }
       }
     }
   } catch (err) {

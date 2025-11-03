@@ -114,10 +114,23 @@ class GoogleAuthService {
         throw new Error('Invalid response from backend')
       }
 
+      // Check if 2FA is required
+      if (response.data.requires_2fa || response.data.requires_verification) {
+        console.log('[Google Auth] 2FA verification required')
+        return {
+          success: true,
+          requires2FA: true,
+          idToken: credential,
+          message: response.data.message || 'Verification code sent'
+        }
+      }
+
+      // Direct login without 2FA
       console.log('[Google Auth] Backend authentication successful')
 
       return {
         success: true,
+        requires2FA: false,
         token: response.data.token,
         user: {
           id: response.data.user_id,
@@ -145,6 +158,60 @@ class GoogleAuthService {
         error.response?.data?.message ||
         error.message ||
         'Failed to authenticate with Google'
+      )
+    }
+  }
+
+  /**
+   * Verify Google authentication with 2FA code
+   * @param {string} idToken - JWT ID token from Google
+   * @param {string} code - 6-digit verification code
+   * @returns {Promise<Object>} Authentication response from backend
+   */
+  async verifyCode(idToken, code) {
+    try {
+      console.log('[Google Auth] Verifying code with backend')
+
+      const response = await api.post('/google-auth/verify-code', {
+        id_token: idToken,
+        verification_code: code
+      })
+
+      if (!response.data) {
+        throw new Error('Invalid response from backend')
+      }
+
+      console.log('[Google Auth] Verification successful')
+
+      return {
+        success: true,
+        token: response.data.token,
+        user: {
+          id: response.data.user_id,
+          username: response.data.user_nicename || response.data.user_email,
+          email: response.data.user_email,
+          displayName: response.data.user_display_name || response.data.user_email
+        },
+        tokenExpires: response.data.token_expires || null
+      }
+    } catch (error) {
+      console.error('[Google Auth] Verification failed:', error)
+
+      // Handle specific HTTP error codes
+      if (error.response?.status === 400) {
+        throw new Error('Invalid verification code')
+      } else if (error.response?.status === 401) {
+        throw new Error('Verification failed. Please try again.')
+      } else if (error.response?.status === 403) {
+        throw new Error('Access denied. Your account may not be authorized.')
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.')
+      }
+
+      throw new Error(
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to verify code'
       )
     }
   }
