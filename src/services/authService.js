@@ -272,6 +272,65 @@ export const authService = {
       // Re-throw the error if it's already been processed
       throw error
     }
+  },
+
+  /**
+   * Verify Google authentication code - Step 2 for Google Sign-In with 2FA
+   * @param {string} credential - Google credential token
+   * @param {string} code - 6-digit verification code
+   * @returns {Promise<Object>} Authentication response with token and user data
+   */
+  async verifyGoogleCode(credential, code) {
+    try {
+      // Validate input parameters
+      if (!credential || !code) {
+        throw new Error('Credential and verification code are required')
+      }
+
+      // Validate code format (6 digits)
+      if (!/^\d{6}$/.test(code)) {
+        throw new Error('Verification code must be 6 digits')
+      }
+
+      // Make verification request via the JWT auth API
+      const response = await authApi.post('/google-auth/verify', {
+        id_token: credential,
+        code: code
+      })
+
+      // Validate response structure
+      if (!response.data || !response.data.token) {
+        throw new Error('Invalid response format from authentication server')
+      }
+
+      return {
+        success: true,
+        token: response.data.token,
+        user: {
+          id: response.data.user_id,
+          username: response.data.user_nicename || response.data.user_email,
+          email: response.data.user_email,
+          displayName: response.data.user_display_name || response.data.user_email
+        },
+        tokenExpires: response.data.token_expires || null
+      }
+    } catch (error) {
+      // Handle different types of errors
+      if (error.status === 401) {
+        throw new Error('Invalid verification code or credentials')
+      } else if (error.status === 429) {
+        throw new Error('Too many verification attempts. Please try again later')
+      } else if (error.status >= 500) {
+        throw new Error('Server error. Please try again later')
+      } else if (error.code === 'ECONNABORTED') {
+        throw new Error('Request timed out. Please check your connection')
+      } else if (!navigator.onLine) {
+        throw new Error('No internet connection. Please check your network')
+      }
+
+      // Re-throw the error if it's already been processed
+      throw error
+    }
   }
 }
 

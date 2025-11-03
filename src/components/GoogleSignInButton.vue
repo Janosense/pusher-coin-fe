@@ -34,25 +34,37 @@ const handleCredentialResponse = async (response) => {
     const authResult = await googleAuthService.authenticateWithBackend(response.credential)
 
     if (authResult.success) {
-      console.log(authResult)
-      // Store authentication data
-      authenticationStore.setUser(authResult.user)
-      authenticationStore.setToken(authResult.token)
+      // Check if 2FA verification is required
+      if (authResult.requiresVerification) {
+        console.log('[GoogleSignInButton] Verification required, setting pending state')
 
-      // Persist to localStorage
-      localStorage.setItem('pusher_coin_auth_token', authResult.token)
-      localStorage.setItem('pusher_coin_user_data', JSON.stringify(authResult.user))
+        // Store the pending authentication data in the store
+        authenticationStore.setPendingGoogleAuth(authResult.credential, authResult.tempData)
 
-      console.log('[GoogleSignInButton] Authentication successful:', authResult.user.username)
+        // Don't navigate - let the SignInForm show step 2
+        // The SignInForm will watch for pendingGoogleAuth and show the verification step
+        console.log('[GoogleSignInButton] Waiting for user to enter verification code')
+      } else {
+        console.log(authResult)
+        // Normal flow: No 2FA required, store authentication data
+        authenticationStore.setUser(authResult.user)
+        authenticationStore.setToken(authResult.token)
 
-      // Navigate to the redirect route or home
-      const redirectRoute = props.redirect?.path || props.redirect?.name || '/'
+        // Persist to localStorage
+        localStorage.setItem('pusher_coin_auth_token', authResult.token)
+        localStorage.setItem('pusher_coin_user_data', JSON.stringify(authResult.user))
 
-      try {
-        await router.push(redirectRoute)
-      } catch (navError) {
-        console.warn('[GoogleSignInButton] Navigation warning:', navError.message)
-        await router.push('/')
+        console.log('[GoogleSignInButton] Authentication successful:', authResult.user.username)
+
+        // Navigate to the redirect route or home
+        const redirectRoute = props.redirect?.path || props.redirect?.name || '/'
+
+        try {
+          await router.push(redirectRoute)
+        } catch (navError) {
+          console.warn('[GoogleSignInButton] Navigation warning:', navError.message)
+          await router.push('/')
+        }
       }
     }
   } catch (err) {

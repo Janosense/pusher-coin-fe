@@ -14,6 +14,9 @@ export const useAuthenticationStore = defineStore('authentication', () => {
   const error = ref(null)
   const isInitialized = ref(false)
 
+  // Google Sign-In pending verification state
+  const pendingGoogleAuth = ref(null) // Stores { credential, tempData } when 2FA is required
+
   const router = useRouter()
 
   // Getters
@@ -150,6 +153,54 @@ export const useAuthenticationStore = defineStore('authentication', () => {
       }
     } catch (err) {
       console.error('[Auth Store] Verify code error:', err.message)
+      error.value = err.message
+      return { success: false, error: err.message }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const setPendingGoogleAuth = (credential, tempData) => {
+    pendingGoogleAuth.value = { credential, tempData }
+    console.log('[Auth Store] Set pending Google authentication')
+  }
+
+  const clearPendingGoogleAuth = () => {
+    pendingGoogleAuth.value = null
+    console.log('[Auth Store] Cleared pending Google authentication')
+  }
+
+  const verifyGoogleCode = async (code) => {
+    try {
+      clearError()
+      setLoading(true)
+
+      if (!pendingGoogleAuth.value) {
+        throw new Error('No pending Google authentication')
+      }
+
+      const response = await authService.verifyGoogleCode(
+        pendingGoogleAuth.value.credential,
+        code
+      )
+
+      if (response.success) {
+        token.value = response.token
+        user.value = response.user
+
+        // Save to localStorage
+        saveToLocalStorage(response.token, response.user)
+
+        // Clear pending state
+        clearPendingGoogleAuth()
+
+        console.log('[Auth Store] Google verification successful for user:', response.user.username)
+        return { success: true, user: response.user }
+      } else {
+        throw new Error('Verification failed')
+      }
+    } catch (err) {
+      console.error('[Auth Store] Verify Google code error:', err.message)
       error.value = err.message
       return { success: false, error: err.message }
     } finally {
@@ -299,6 +350,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     isLoading: computed(() => isLoading.value),
     error: computed(() => error.value),
     isInitialized: computed(() => isInitialized.value),
+    pendingGoogleAuth: computed(() => pendingGoogleAuth.value),
 
     // Getters
     isAuthenticated,
@@ -319,6 +371,9 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     checkAuthStatus,
     requestVerification,
     verifyCode,
+    setPendingGoogleAuth,
+    clearPendingGoogleAuth,
+    verifyGoogleCode,
 
     // Legacy method for backward compatibility
     authenticateUser,

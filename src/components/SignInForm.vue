@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 import { useRouter } from 'vue-router'
 import GoogleSignInButton from './GoogleSignInButton.vue'
@@ -13,6 +13,18 @@ const props = defineProps({
 
 // Form step management
 const currentStep = ref(1) // 1 = credentials, 2 = verification code
+
+// Watch for pending Google authentication
+watch(
+  () => authenticationStore.pendingGoogleAuth,
+  (pendingAuth) => {
+    if (pendingAuth) {
+      console.log('[SignInForm] Google Sign-In requires verification, moving to step 2')
+      currentStep.value = 2
+    }
+  },
+  { immediate: true }
+)
 
 // Form data
 const formData = ref({
@@ -118,11 +130,20 @@ const handleSubmit = async () => {
       }
     } else {
       // Step 2: Verify code and complete login
-      const result = await authenticationStore.verifyCode(
-        formData.value.username.trim(),
-        formData.value.password,
-        formData.value.verificationCode
-      )
+      let result
+
+      // Check if this is a Google Sign-In verification
+      if (authenticationStore.pendingGoogleAuth) {
+        console.log('[SignInForm] Verifying Google Sign-In code')
+        result = await authenticationStore.verifyGoogleCode(formData.value.verificationCode)
+      } else {
+        console.log('[SignInForm] Verifying standard login code')
+        result = await authenticationStore.verifyCode(
+          formData.value.username.trim(),
+          formData.value.password,
+          formData.value.verificationCode
+        )
+      }
 
       if (result.success) {
         // Clear form data for security
@@ -160,6 +181,12 @@ const goBackToCredentials = () => {
   currentStep.value = 1
   formData.value.verificationCode = ''
   fieldErrors.value.verificationCode = ''
+
+  // Clear pending Google auth if present
+  if (authenticationStore.pendingGoogleAuth) {
+    authenticationStore.clearPendingGoogleAuth()
+  }
+
   clearErrors()
 }
 
@@ -198,6 +225,13 @@ const submitButtonText = computed(() => {
     return currentStep.value === 1 ? 'Sending Code...' : 'Verifying...'
   }
   return currentStep.value === 1 ? 'Continue' : 'Sign In'
+})
+
+const verificationMessage = computed(() => {
+  if (authenticationStore.pendingGoogleAuth) {
+    return 'A 6-digit verification code has been sent for your Google Sign-In. Please enter it below to complete authentication.'
+  }
+  return 'A 6-digit verification code has been sent. Please enter it below to complete sign in.'
 })
 </script>
 
@@ -275,7 +309,7 @@ const submitButtonText = computed(() => {
       </div>
 
       <div class="form__info-message">
-        A 6-digit verification code has been sent. Please enter it below to complete sign in.
+        {{ verificationMessage }}
       </div>
 
       <div class="form__item">
