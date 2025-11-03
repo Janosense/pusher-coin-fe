@@ -176,6 +176,7 @@ class GoogleAuthService {
         id_token: idToken,
         verification_code: code
       })
+      console.log(response);
 
       if (!response.data) {
         throw new Error('Invalid response from backend')
