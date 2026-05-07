@@ -1,337 +1,111 @@
-import axios from 'axios'
+import api from './api.js'
 
-const userApi = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+/**
+ * Maps the backend auth envelope (snake_case) to the SPA shape (camelCase).
+ */
+const mapEnvelope = (data) => ({
+  accessToken: data.access_token,
+  accessTokenExpiresIn: data.access_token_expires_in,
+  refreshToken: data.refresh_token,
+  refreshTokenExpiresIn: data.refresh_token_expires_in,
+  user: {
+    id: data.user_id,
+    username: data.user_nicename || data.user_email,
+    email: data.user_email,
+    displayName: data.user_display_name || data.user_email
+  },
+  termsAccepted: !!data.terms_accepted,
+  nicknameRequired: !!data.nickname_required
 })
 
-// Create separate axios instance for JWT authentication
-const authApi = axios.create({
-  baseURL: import.meta.env.VITE_JWT_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-})
-
-// Request interceptor for authentication API
-authApi.interceptors.request.use(
-  (config) => {
-    console.log(`[Auth API Request] ${config.method?.toUpperCase()} ${config.url}`)
-    return config
-  },
-  (error) => {
-    console.error('[Auth API Request Error]', error)
-    return Promise.reject(error)
-  }
-)
-
-// Response interceptor for authentication API
-authApi.interceptors.response.use(
-  (response) => {
-    console.log(`[Auth API Response] ${response.status} ${response.config.url}`)
-    return response
-  },
-  (error) => {
-    const errorMessage = error.response?.data?.message || error.message || 'Authentication failed'
-    console.error('[Auth API Response Error]', {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: errorMessage
-    })
-
-    // Create a standardized error object
-    const authError = new Error(errorMessage)
-    authError.status = error.response?.status
-    authError.code = error.response?.data?.code
-    authError.originalError = error
-
-    return Promise.reject(authError)
-  }
-)
+const messageFor = (error, fallback) => {
+  if (error.response?.data?.message) return error.response.data.message
+  return error.message || fallback
+}
 
 export const authService = {
   /**
-   * Authenticate user and get JWT token
-   * @param {string} username - User's username or email
-   * @param {string} password - User's password
-   * @returns {Promise<Object>} Authentication response with token and user data
-   */
-  async login(username, password) {
-    try {
-      // Validate input parameters
-      if (!username || !password) {
-        throw new Error('Username and password are required')
-      }
-
-      // Make authentication request
-      const response = await authApi.post('/token', {
-        username: username.trim(),
-        password: password
-      })
-
-      // Validate response structure
-      if (!response.data || !response.data.token) {
-        throw new Error('Invalid response format from authentication server')
-      }
-
-      return {
-        success: true,
-        token: response.data.token,
-        user: {
-          id: response.data.user_id,
-          username: response.data.user_nicename,
-          email: response.data.user_email,
-          displayName: response.data.user_display_name
-        },
-        tokenExpires: response.data.token_expires || null
-      }
-    } catch (error) {
-      // Handle different types of errors
-      if (error.status === 401) {
-        throw new Error('Invalid username or password')
-      } else if (error.status === 429) {
-        throw new Error('Too many login attempts. Please try again later')
-      } else if (error.status >= 500) {
-        throw new Error('Server error. Please try again later')
-      } else if (error.code === 'ECONNABORTED') {
-        throw new Error('Login request timed out. Please check your connection')
-      } else if (!navigator.onLine) {
-        throw new Error('No internet connection. Please check your network')
-      }
-
-      // Re-throw the error if it's already been processed
-      throw error
-    }
-  },
-
-  /**
-   * Validate JWT token
-   * @param {string} token - JWT token to validate
-   * @returns {Promise<Object>} Validation response
-   */
-  async validateToken(token) {
-    try {
-      if (!token) {
-        throw new Error('Token is required for validation')
-      }
-
-      const response = await authApi.post('/token/validate', {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      return {
-        valid: true,
-        user: response.data.data || null
-      }
-    } catch (error) {
-      console.warn('[Auth Service] Token validation failed:', error.message)
-      return {
-        valid: false,
-        error: error.message
-      }
-    }
-  },
-
-  /**
-   * Refresh JWT token if supported by backend
-   * @param {string} token - Current JWT token
-   * @returns {Promise<Object>} New token response
-   */
-  async refreshToken(token) {
-    try {
-      if (!token) {
-        throw new Error('Token is required for refresh')
-      }
-
-      const response = await authApi.post('/token/refresh', {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      return {
-        success: true,
-        token: response.data.token,
-        tokenExpires: response.data.token_expires || null
-      }
-    } catch (error) {
-      console.warn('[Auth Service] Token refresh failed:', error.message)
-      throw new Error('Unable to refresh token. Please login again')
-    }
-  },
-
-  /**
-   * Request verification code - Step 1 of two-step authentication
-   * @param {string} username - User's username or email
-   * @param {string} password - User's password
-   * @returns {Promise<Object>} Response indicating code was sent
+   * Step 1 of email/password 2FA: request the verification code.
    */
   async requestVerification(username, password) {
+    if (!username || !password) {
+      throw new Error('Username and password are required')
+    }
     try {
-      // Validate input parameters
-      if (!username || !password) {
-        throw new Error('Username and password are required')
-      }
-
-      // Make request to send verification code
-      const response = await userApi.post('/user/request-verification/', {
+      const response = await api.post('/user/request-verification/', {
         login: username.trim(),
-        password: password
+        password
       })
-
-      // Check if verification code was sent successfully
-      if (response.data && response.data.success) {
-        return {
-          success: true,
-          message: response.data.message || 'Verification code sent successfully'
-        }
-      } else {
-        throw new Error(response.data?.message || 'Failed to send verification code')
+      return {
+        success: !!response.data?.success,
+        message: response.data?.message
       }
     } catch (error) {
-      // Handle different types of errors
-      if (error.status === 401) {
-        throw new Error('Invalid username or password')
-      } else if (error.status === 429) {
-        throw new Error('Too many requests. Please try again later')
-      } else if (error.status >= 500) {
-        throw new Error('Server error. Please try again later')
-      } else if (error.code === 'ECONNABORTED') {
-        throw new Error('Request timed out. Please check your connection')
-      } else if (!navigator.onLine) {
-        throw new Error('No internet connection. Please check your network')
-      }
-
-      // Re-throw the error if it's already been processed
-      throw error
+      throw new Error(messageFor(error, 'Failed to request verification code'))
     }
   },
 
   /**
-   * Verify code and complete authentication - Step 2 of two-step authentication
-   * @param {string} username - User's username or email
-   * @param {string} password - User's password
-   * @param {string} code - 6-digit verification code
-   * @returns {Promise<Object>} Authentication response with token and user data
+   * Step 2 of email/password 2FA: redeem the code, return the token envelope.
    */
   async verifyCode(username, password, code) {
+    if (!username || !password || !code) {
+      throw new Error('Username, password, and verification code are required')
+    }
+    if (!/^\d{6}$/.test(code)) {
+      throw new Error('Verification code must be 6 digits')
+    }
     try {
-      // Validate input parameters
-      if (!username || !password || !code) {
-        throw new Error('Username, password, and verification code are required')
-      }
-
-      // Validate code format (6 digits)
-      if (!/^\d{6}$/.test(code)) {
-        throw new Error('Verification code must be 6 digits')
-      }
-
-      // Make verification request
-      const response = await userApi.post('/user/verify-code/', {
+      const response = await api.post('/user/verify-code/', {
         login: username.trim(),
-        password: password,
-        code: code
+        password,
+        code
       })
-
-      // Validate response structure
-      if (!response.data || !response.data.token) {
-        throw new Error('Invalid response format from authentication server')
-      }
-
-      return {
-        success: true,
-        token: response.data.token,
-        user: {
-          id: response.data.user_id,
-          username: response.data.user_nicename,
-          email: response.data.user_email,
-          displayName: response.data.user_display_name
-        },
-        tokenExpires: response.data.token_expires || null
-      }
+      return mapEnvelope(response.data)
     } catch (error) {
-      // Handle different types of errors
-      if (error.status === 401) {
-        throw new Error('Invalid verification code or credentials')
-      } else if (error.status === 429) {
-        throw new Error('Too many verification attempts. Please try again later')
-      } else if (error.status >= 500) {
-        throw new Error('Server error. Please try again later')
-      } else if (error.code === 'ECONNABORTED') {
-        throw new Error('Request timed out. Please check your connection')
-      } else if (!navigator.onLine) {
-        throw new Error('No internet connection. Please check your network')
-      }
-
-      // Re-throw the error if it's already been processed
-      throw error
+      throw new Error(messageFor(error, 'Verification failed'))
     }
   },
 
   /**
-   * Verify Google authentication code - Step 2 for Google Sign-In with 2FA
-   * @param {string} credential - Google credential token
-   * @param {string} code - 6-digit verification code
-   * @returns {Promise<Object>} Authentication response with token and user data
+   * Refresh the access token using the stored refresh token.
    */
-  async verifyGoogleCode(credential, code) {
+  async refresh(refreshToken) {
+    if (!refreshToken) throw new Error('Refresh token is required')
+    const response = await api.post('/auth/refresh', { refresh_token: refreshToken })
+    return mapEnvelope(response.data)
+  },
+
+  /**
+   * Server-side logout: revoke the refresh token.
+   */
+  async logoutOnServer(refreshToken) {
     try {
-      // Validate input parameters
-      if (!credential || !code) {
-        throw new Error('Credential and verification code are required')
-      }
-
-      // Validate code format (6 digits)
-      if (!/^\d{6}$/.test(code)) {
-        throw new Error('Verification code must be 6 digits')
-      }
-
-      // Make verification request via the JWT auth API
-      const response = await authApi.post('/google-auth/verify-code', {
-        id_token: credential,
-        verification_code: code
-      })
-
-      // Validate response structure
-      if (!response.data || !response.data.token) {
-        throw new Error('Invalid response format from authentication server')
-      }
-
-      return {
-        success: true,
-        token: response.data.token,
-        user: {
-          id: response.data.user_id,
-          username: response.data.user_nicename || response.data.user_email,
-          email: response.data.user_email,
-          displayName: response.data.user_display_name || response.data.user_email
-        },
-        tokenExpires: response.data.token_expires || null
-      }
+      await api.post('/auth/logout', { refresh_token: refreshToken || '' })
     } catch (error) {
-      // Handle different types of errors
-      if (error.status === 401) {
-        throw new Error('Invalid verification code or credentials')
-      } else if (error.status === 429) {
-        throw new Error('Too many verification attempts. Please try again later')
-      } else if (error.status >= 500) {
-        throw new Error('Server error. Please try again later')
-      } else if (error.code === 'ECONNABORTED') {
-        throw new Error('Request timed out. Please check your connection')
-      } else if (!navigator.onLine) {
-        throw new Error('No internet connection. Please check your network')
-      }
-
-      // Re-throw the error if it's already been processed
-      throw error
+      console.warn('[Auth] Server-side logout failed:', error.message)
     }
+  },
+
+  /**
+   * Accept the current Terms & Conditions version.
+   */
+  async acceptTerms(version) {
+    const response = await api.post('/user/accept-terms', { version })
+    return {
+      acceptedAt: response.data.terms_accepted_at,
+      version: response.data.terms_accepted_version
+    }
+  },
+
+  /**
+   * Pick a unique nickname after first social login.
+   */
+  async setNickname(nickname) {
+    const response = await api.post('/user/set-nickname', { nickname })
+    return { nickname: response.data.nickname }
   }
 }
 
 export default authService
+export { mapEnvelope }

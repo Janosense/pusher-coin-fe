@@ -2,18 +2,18 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import googleAuthService from '@/services/googleAuthService.js'
 import { useAuthenticationStore } from '@/stores/authentication.js'
-import { useRouter } from 'vue-router'
 
 const props = defineProps({
   buttonText: {
     type: String,
     default: 'signin_with' // Options: 'signin_with', 'signup_with', 'continue_with'
   },
-  redirect: Object
+  // Accepted for parity with the parent form's prop wiring; the post-verify
+  // redirect is handled by SignInForm/the router guard, not this button.
+  redirect: { type: Object, default: null }
 })
 
 const authenticationStore = useAuthenticationStore()
-const router = useRouter()
 
 const buttonContainer = ref(null)
 const isLoading = ref(false)
@@ -35,41 +35,16 @@ const handleCredentialResponse = async (response) => {
     // Authenticate with backend using the Google ID token
     const authResult = await googleAuthService.authenticateWithBackend(response.credential)
 
-    if (authResult.success) {
-      // Check if email-code verification is required
-      if (authResult.requiresVerification) {
-        console.log('[GoogleSignInButton] Verification required, storing token and showing verification step')
+    if (authResult.success && authResult.requiresVerification) {
+      console.log('[GoogleSignInButton] Verification required, storing token and showing verification step')
 
-        // Store the Google ID token in the auth store
-        await authenticationStore.requestGoogleVerification(authResult.idToken)
+      // Store the Google ID token in the auth store
+      await authenticationStore.requestGoogleVerification(authResult.idToken)
 
-        // Emit event to show step 2 of the form
-        emit('requires-verification')
+      // Emit event to show step 2 of the form
+      emit('requires-verification')
 
-        console.log('[GoogleSignInButton] Verification step triggered')
-      } else {
-        // Direct login without 2FA
-        console.log(authResult)
-        // Store authentication data
-        authenticationStore.setUser(authResult.user)
-        authenticationStore.setToken(authResult.token)
-
-        // Persist to localStorage
-        localStorage.setItem('pusher_coin_auth_token', authResult.token)
-        localStorage.setItem('pusher_coin_user_data', JSON.stringify(authResult.user))
-
-        console.log('[GoogleSignInButton] Authentication successful:', authResult.user.username)
-
-        // Navigate to the redirect route or home
-        const redirectRoute = props.redirect?.path || props.redirect?.name || '/'
-
-        try {
-          await router.push(redirectRoute)
-        } catch (navError) {
-          console.warn('[GoogleSignInButton] Navigation warning:', navError.message)
-          await router.push('/')
-        }
-      }
+      console.log('[GoogleSignInButton] Verification step triggered')
     }
   } catch (err) {
     console.error('[GoogleSignInButton] Authentication error:', err)

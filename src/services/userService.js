@@ -23,7 +23,10 @@ export const userService = {
    */
   async signUp(userData) {
     try {
-      const response = await api.post('/user/sign-up', userData)
+      const response = await api.post('/user/sign-up', {
+        ...userData,
+        terms_accepted: true
+      })
       return response.data
     } catch (error) {
       // Handle different types of errors with meaningful messages
@@ -45,15 +48,27 @@ export const userService = {
               status,
               data
             )
+          case 403:
+            throw new RegistrationError(
+              data?.message || 'Action not permitted.',
+              status,
+              data
+            )
           case 409:
             throw new RegistrationError(
-              'User already exists. Please try with different email or nickname.',
+              data?.message || 'User already exists. Please try with different email or nickname.',
               status,
               data
             )
           case 422:
             throw new RegistrationError(
               data?.message || 'Validation failed. Please check your input data.',
+              status,
+              data
+            )
+          case 429:
+            throw new RegistrationError(
+              data?.message || 'Too many sign-up attempts. Please wait and try again.',
               status,
               data
             )

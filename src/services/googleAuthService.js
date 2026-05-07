@@ -1,4 +1,5 @@
 import api from './api.js'
+import { mapEnvelope } from './authService.js'
 
 /**
  * Google Sign-In Service
@@ -114,31 +115,18 @@ class GoogleAuthService {
         throw new Error('Invalid response from backend')
       }
 
-      // Check if email-code verification is required (canonical backend flag: requires_verification)
-      if (response.data.requires_verification) {
-        console.log('[Google Auth] Email verification required')
-        return {
-          success: true,
-          requiresVerification: true,
-          idToken: credential,
-          message: response.data.message || 'Verification code sent'
-        }
+      // Backend always responds with `requires_verification: true` — Google
+      // sign-in is gated by email-code 2FA. The flag is checked defensively.
+      if (!response.data.requires_verification) {
+        throw new Error('Unexpected response: verification step missing.')
       }
 
-      // Direct login without email verification
-      console.log('[Google Auth] Backend authentication successful')
-
+      console.log('[Google Auth] Email verification required')
       return {
         success: true,
-        requiresVerification: false,
-        token: response.data.token,
-        user: {
-          id: response.data.user_id,
-          username: response.data.user_nicename || response.data.user_email,
-          email: response.data.user_email,
-          displayName: response.data.user_display_name || response.data.user_email
-        },
-        tokenExpires: response.data.token_expires || null
+        requiresVerification: true,
+        idToken: credential,
+        message: response.data.message || 'Verification code sent'
       }
     } catch (error) {
       console.error('[Google Auth] Backend authentication failed:', error)
@@ -176,7 +164,6 @@ class GoogleAuthService {
         id_token: idToken,
         verification_code: code
       })
-      console.log(response);
 
       if (!response.data) {
         throw new Error('Invalid response from backend')
@@ -184,17 +171,7 @@ class GoogleAuthService {
 
       console.log('[Google Auth] Verification successful')
 
-      return {
-        success: true,
-        token: response.data.token,
-        user: {
-          id: response.data.user_id,
-          username: response.data.user_nicename || response.data.user_email,
-          email: response.data.user_email,
-          displayName: response.data.user_display_name || response.data.user_email
-        },
-        tokenExpires: response.data.token_expires || null
-      }
+      return { success: true, ...mapEnvelope(response.data) }
     } catch (error) {
       console.error('[Google Auth] Verification failed:', error)
 

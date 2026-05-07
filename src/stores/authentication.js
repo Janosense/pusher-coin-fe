@@ -2,36 +2,40 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
 import { authService } from '@/services/authService.js'
+import sessionService from '@/services/sessionService.js'
 
 const TOKEN_KEY = 'pusher_coin_auth_token'
 const USER_KEY = 'pusher_coin_user_data'
+const INACTIVITY_MS = 15 * 60 * 1000
 
 export const useAuthenticationStore = defineStore('authentication', () => {
-  // State
+  // Core auth state
   const user = ref(null)
-  const token = ref(null)
+  const accessToken = ref(null)
+  const refreshTokenValue = ref(null)
+  const accessTokenExpiresAt = ref(null)
+  const termsAccepted = ref(false)
+  const nicknameRequired = ref(false)
+
+  // UI state
   const isLoading = ref(false)
   const error = ref(null)
   const isInitialized = ref(false)
 
-  // Google 2FA state
+  // Pending Google verification state
   const pendingGoogleAuth = ref(false)
   const googleIdToken = ref(null)
 
   const router = useRouter()
 
   // Getters
-  const isAuthenticated = computed(() => {
-    return !!(token.value && user.value)
-  })
-
+  const isAuthenticated = computed(() => !!(accessToken.value && user.value))
   const currentUser = computed(() => user.value)
-
-  const authToken = computed(() => token.value)
-
+  const authToken = computed(() => accessToken.value)
   const hasError = computed(() => !!error.value)
 
-  // Actions
+  // ---------------- helpers ----------------
+
   const clearError = () => {
     error.value = null
   }
@@ -41,365 +45,252 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     googleIdToken.value = null
   }
 
-  const setLoading = (loading) => {
-    isLoading.value = loading
-  }
-
-  const saveToLocalStorage = (tokenValue, userData) => {
+  const persist = () => {
     try {
-      if (tokenValue) {
-        localStorage.setItem(TOKEN_KEY, tokenValue)
+      if (accessToken.value) {
+        localStorage.setItem(TOKEN_KEY, accessToken.value)
+      } else {
+        localStorage.removeItem(TOKEN_KEY)
       }
-      if (userData) {
-        localStorage.setItem(USER_KEY, JSON.stringify(userData))
+      const payload = {
+        user: user.value,
+        refreshToken: refreshTokenValue.value,
+        accessTokenExpiresAt: accessTokenExpiresAt.value,
+        termsAccepted: termsAccepted.value,
+        nicknameRequired: nicknameRequired.value
+      }
+      if (user.value || refreshTokenValue.value) {
+        localStorage.setItem(USER_KEY, JSON.stringify(payload))
+      } else {
+        localStorage.removeItem(USER_KEY)
       }
     } catch (err) {
-      console.warn('[Auth Store] Failed to save to localStorage:', err.message)
+      console.warn('[Auth Store] Failed to persist auth state:', err.message)
     }
   }
 
-  const loadFromLocalStorage = () => {
+  const hydrate = () => {
     try {
-      const savedToken = localStorage.getItem(TOKEN_KEY)
-      const savedUser = localStorage.getItem(USER_KEY)
-
-      if (savedToken && savedUser) {
-        token.value = savedToken
-        user.value = JSON.parse(savedUser)
-        return true
-      }
+      accessToken.value = localStorage.getItem(TOKEN_KEY)
+      const raw = localStorage.getItem(USER_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      user.value = parsed.user || null
+      refreshTokenValue.value = parsed.refreshToken || null
+      accessTokenExpiresAt.value = parsed.accessTokenExpiresAt || null
+      termsAccepted.value = !!parsed.termsAccepted
+      nicknameRequired.value = !!parsed.nicknameRequired
     } catch (err) {
-      console.warn('[Auth Store] Failed to load from localStorage:', err.message)
-      clearLocalStorage()
+      console.warn('[Auth Store] Failed to hydrate auth state:', err.message)
+      clearLocal()
     }
-    return false
   }
 
-  const clearLocalStorage = () => {
+  const clearLocal = () => {
+    user.value = null
+    accessToken.value = null
+    refreshTokenValue.value = null
+    accessTokenExpiresAt.value = null
+    termsAccepted.value = false
+    nicknameRequired.value = false
+    error.value = null
+    clearGoogleAuthState()
     try {
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(USER_KEY)
     } catch (err) {
       console.warn('[Auth Store] Failed to clear localStorage:', err.message)
     }
+    sessionService.stop()
   }
 
-  const login = async (username, password) => {
-    try {
-      clearError()
-      setLoading(true)
-
-      const response = await authService.login(username, password)
-
-      if (response.success) {
-        token.value = response.token
-        user.value = response.user
-
-        // Save to localStorage
-        saveToLocalStorage(response.token, response.user)
-
-        console.log('[Auth Store] Login successful for user:', response.user.username)
-        return { success: true, user: response.user }
-      } else {
-        throw new Error('Login failed')
-      }
-    } catch (err) {
-      console.error('[Auth Store] Login error:', err.message)
-      error.value = err.message
-
-      // Clear any partial auth data
-      logout(false)
-
-      return { success: false, error: err.message }
-    } finally {
-      setLoading(false)
-    }
+  const applyEnvelope = (envelope) => {
+    user.value = envelope.user
+    accessToken.value = envelope.accessToken
+    refreshTokenValue.value = envelope.refreshToken
+    accessTokenExpiresAt.value = Date.now() + envelope.accessTokenExpiresIn * 1000
+    termsAccepted.value = envelope.termsAccepted
+    nicknameRequired.value = envelope.nicknameRequired
+    persist()
+    sessionService.start(handleInactivityTimeout, INACTIVITY_MS)
   }
+
+  // ---------------- actions ----------------
 
   const requestVerification = async (username, password) => {
     try {
       clearError()
-      setLoading(true)
-
+      isLoading.value = true
       const response = await authService.requestVerification(username, password)
-
-      if (response.success) {
-        console.log('[Auth Store] Verification code requested successfully')
-        return { success: true, message: response.message }
-      } else {
-        throw new Error('Failed to request verification code')
-      }
+      return { success: response.success, message: response.message }
     } catch (err) {
-      console.error('[Auth Store] Request verification error:', err.message)
       error.value = err.message
       return { success: false, error: err.message }
     } finally {
-      setLoading(false)
+      isLoading.value = false
     }
   }
 
   const verifyCode = async (username, password, code) => {
     try {
       clearError()
-      setLoading(true)
-
-      const response = await authService.verifyCode(username, password, code)
-
-      if (response.success) {
-        token.value = response.token
-        user.value = response.user
-
-        // Save to localStorage
-        saveToLocalStorage(response.token, response.user)
-
-        console.log('[Auth Store] Verification successful for user:', response.user.username)
-        return { success: true, user: response.user }
-      } else {
-        throw new Error('Verification failed')
-      }
+      isLoading.value = true
+      const envelope = await authService.verifyCode(username, password, code)
+      applyEnvelope(envelope)
+      return { success: true, user: user.value }
     } catch (err) {
-      console.error('[Auth Store] Verify code error:', err.message)
       error.value = err.message
       return { success: false, error: err.message }
     } finally {
-      setLoading(false)
+      isLoading.value = false
     }
   }
 
   const requestGoogleVerification = async (idToken) => {
     try {
       clearError()
-      setLoading(true)
-
-      // Store the Google ID token for later verification
       googleIdToken.value = idToken
       pendingGoogleAuth.value = true
-
-      console.log('[Auth Store] Google verification code requested successfully')
-      return { success: true, message: 'Verification code sent' }
+      return { success: true }
     } catch (err) {
-      console.error('[Auth Store] Request Google verification error:', err.message)
       error.value = err.message
       clearGoogleAuthState()
       return { success: false, error: err.message }
-    } finally {
-      setLoading(false)
     }
   }
 
   const verifyGoogleCode = async (code) => {
     try {
       clearError()
-      setLoading(true)
-
+      isLoading.value = true
       if (!googleIdToken.value) {
         throw new Error('No pending Google authentication')
       }
-
-      // Import googleAuthService dynamically to avoid circular dependencies
       const { default: googleAuthService } = await import('@/services/googleAuthService.js')
-      const response = await googleAuthService.verifyCode(googleIdToken.value, code)
-
-      if (response.success) {
-        token.value = response.token
-        user.value = response.user
-
-        // Save to localStorage
-        saveToLocalStorage(response.token, response.user)
-
-        // Clear Google auth state
-        clearGoogleAuthState()
-
-        console.log('[Auth Store] Google verification successful for user:', response.user.username)
-        return { success: true, user: response.user }
-      } else {
-        throw new Error('Verification failed')
-      }
+      const envelope = await googleAuthService.verifyCode(googleIdToken.value, code)
+      applyEnvelope(envelope)
+      clearGoogleAuthState()
+      return { success: true, user: user.value }
     } catch (err) {
-      console.error('[Auth Store] Verify Google code error:', err.message)
       error.value = err.message
       return { success: false, error: err.message }
     } finally {
-      setLoading(false)
+      isLoading.value = false
     }
   }
 
-  const logout = (redirect = true) => {
-    console.log('[Auth Store] Logging out user')
+  const acceptTerms = async (version) => {
+    try {
+      clearError()
+      isLoading.value = true
+      await authService.acceptTerms(version)
+      termsAccepted.value = true
+      persist()
+      return { success: true }
+    } catch (err) {
+      error.value = err.message
+      return { success: false, error: err.message }
+    } finally {
+      isLoading.value = false
+    }
+  }
 
-    // Clear state
-    user.value = null
-    token.value = null
-    error.value = null
+  const setNickname = async (nickname) => {
+    try {
+      clearError()
+      isLoading.value = true
+      const result = await authService.setNickname(nickname)
+      if (user.value) {
+        user.value = { ...user.value, username: result.nickname, displayName: result.nickname }
+      }
+      nicknameRequired.value = false
+      persist()
+      return { success: true, nickname: result.nickname }
+    } catch (err) {
+      error.value = err.message
+      return { success: false, error: err.message }
+    } finally {
+      isLoading.value = false
+    }
+  }
 
-    // Clear Google auth state
-    clearGoogleAuthState()
-
-    // Clear localStorage
-    clearLocalStorage()
-
-    // Redirect to login page
+  const logout = async (redirect = true) => {
+    const refreshToServer = refreshTokenValue.value
+    if (refreshToServer) {
+      await authService.logoutOnServer(refreshToServer)
+    }
+    clearLocal()
     if (redirect && router) {
-      router.push({ name: 'sign-in' }).catch(err => {
-        console.warn('[Auth Store] Navigation error during logout:', err.message)
-      })
+      router.push({ name: 'sign-in' }).catch(() => {})
     }
   }
 
-  const validateToken = async () => {
-    if (!token.value) {
-      return false
-    }
-
-    try {
-      const validation = await authService.validateToken(token.value)
-
-      if (!validation.valid) {
-        console.warn('[Auth Store] Token validation failed, logging out')
-        logout(false)
-        return false
-      }
-
-      return true
-    } catch (err) {
-      console.warn('[Auth Store] Token validation error:', err.message)
-      logout(false)
-      return false
-    }
-  }
-
-  const refreshToken = async () => {
-    if (!token.value) {
-      return false
-    }
-
-    try {
-      const response = await authService.refreshToken(token.value)
-
-      if (response.success) {
-        token.value = response.token
-        saveToLocalStorage(response.token, user.value)
-        console.log('[Auth Store] Token refreshed successfully')
-        return true
-      }
-    } catch (err) {
-      console.warn('[Auth Store] Token refresh failed:', err.message)
-      logout(false)
-    }
-
-    return false
+  const handleInactivityTimeout = () => {
+    console.log('[Auth Store] Inactivity timeout — logging out')
+    logout(true)
   }
 
   const initializeAuth = async () => {
-    if (isInitialized.value) {
-      return
+    if (isInitialized.value) return
+    hydrate()
+    if (isAuthenticated.value) {
+      sessionService.start(handleInactivityTimeout, INACTIVITY_MS)
     }
-
-    console.log('[Auth Store] Initializing authentication state')
-
-    // Try to load from localStorage first
-    const hasStoredAuth = loadFromLocalStorage()
-
-    if (hasStoredAuth) {
-      // Validate the stored token
-      const isValid = await validateToken()
-      if (!isValid) {
-        console.log('[Auth Store] Stored token is invalid, cleared auth state')
-      } else {
-        console.log('[Auth Store] Restored authentication from localStorage')
-      }
-    }
-
     isInitialized.value = true
   }
 
-  const authenticateUser = async (route = null) => {
-    console.log('[Auth Store] Legacy authenticateUser called with route:', route)
+  // ---------------- global event wiring ----------------
 
-    // This is the legacy method - maintain compatibility
-    if (isAuthenticated.value) {
-      const targetRoute = route || '/'
-      router.push(targetRoute).catch(err => {
-        console.warn('[Auth Store] Navigation error:', err.message)
-      })
-    } else {
-      console.warn('[Auth Store] Cannot authenticate user - not logged in')
-      router.push({ name: 'sign-in' }).catch(err => {
-        console.warn('[Auth Store] Navigation error:', err.message)
-      })
-    }
-  }
-
-  const checkAuthStatus = () => {
-    return {
-      isAuthenticated: isAuthenticated.value,
-      user: user.value,
-      hasToken: !!token.value,
-      isLoading: isLoading.value,
-      error: error.value
-    }
-  }
-
-  const setUser = (userData) => {
-    user.value = userData
-  }
-
-  const setToken = (tokenData) => {
-    token.value = tokenData
-  }
-
-  // Listen for token expiration events from API interceptors
-  const handleTokenExpiration = () => {
-    console.log('[Auth Store] Received token expiration event')
-    logout(false)
-  }
-
-  // Set up event listener for token expiration
   if (typeof window !== 'undefined') {
-    window.addEventListener('auth:token-expired', handleTokenExpiration)
+    window.addEventListener('auth:token-expired', () => {
+      console.log('[Auth Store] Received token-expired event')
+      clearLocal()
+    })
+
+    window.addEventListener('auth:token-refreshed', (evt) => {
+      const env = evt.detail
+      if (!env || !env.access_token) return
+      accessToken.value = env.access_token
+      refreshTokenValue.value = env.refresh_token
+      accessTokenExpiresAt.value = Date.now() + env.access_token_expires_in * 1000
+      termsAccepted.value = !!env.terms_accepted
+      nicknameRequired.value = !!env.nickname_required
+      persist()
+    })
   }
 
-  // Initialize auth state when store is created
+  // Initialize on store creation (Pinia caches this; runs once per app boot).
   initializeAuth()
 
   return {
-    // State
     user: computed(() => user.value),
-    token: computed(() => token.value),
+    accessToken: computed(() => accessToken.value),
+    refreshToken: computed(() => refreshTokenValue.value),
+    accessTokenExpiresAt: computed(() => accessTokenExpiresAt.value),
+    termsAccepted: computed(() => termsAccepted.value),
+    nicknameRequired: computed(() => nicknameRequired.value),
+
     isLoading: computed(() => isLoading.value),
     error: computed(() => error.value),
     isInitialized: computed(() => isInitialized.value),
     pendingGoogleAuth: computed(() => pendingGoogleAuth.value),
     googleIdToken: computed(() => googleIdToken.value),
 
-    // Getters
     isAuthenticated,
     currentUser,
     authToken,
     hasError,
-
-    // Legacy getter for backward compatibility
     isUserLoggedIn: isAuthenticated,
 
-    // Actions
-    login,
-    logout,
-    validateToken,
-    refreshToken,
-    initializeAuth,
-    clearError,
-    clearGoogleAuthState,
-    checkAuthStatus,
     requestVerification,
     verifyCode,
     requestGoogleVerification,
     verifyGoogleCode,
-
-    // Legacy method for backward compatibility
-    authenticateUser,
-
-    setUser,
-    setToken,
-
+    acceptTerms,
+    setNickname,
+    logout,
+    initializeAuth,
+    clearError,
+    clearGoogleAuthState
   }
 })

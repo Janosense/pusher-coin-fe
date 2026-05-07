@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 import { useRouter } from 'vue-router'
 import GoogleSignInButton from './GoogleSignInButton.vue'
+import AppleSignInButton from './AppleSignInButton.vue'
 
 const authenticationStore = useAuthenticationStore()
 const router = useRouter()
@@ -237,6 +238,10 @@ const submitButtonText = computed(() => {
       <GoogleSignInButton
         :redirect="redirect"
         button-text="signin_with"
+        @requires-verification="handleGoogleRequiresVerification"
+      />
+      <AppleSignInButton
+        button-text="Sign in with Apple"
         @requires-verification="handleGoogleRequiresVerification"
       />
 

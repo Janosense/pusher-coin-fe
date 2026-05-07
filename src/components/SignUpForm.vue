@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import userService from '../services/userService.js'
 import { useRouter } from 'vue-router'
 import GoogleSignInButton from './GoogleSignInButton.vue'
+import AppleSignInButton from './AppleSignInButton.vue'
 
 const router = useRouter()
 
@@ -124,6 +125,7 @@ const isFormValid = computed(() => {
 
     <!-- Google Sign-Up Button -->
     <GoogleSignInButton button-text="signup_with" />
+    <AppleSignInButton button-text="Sign up with Apple" />
 
     <div class="form__divider">
       <span class="form__divider-text">Or sign up with email</span>

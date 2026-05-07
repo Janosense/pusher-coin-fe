@@ -6,28 +6,16 @@ import SignInView from '@/views/SignInView.vue'
 import AccountView from '@/views/AccountView.vue'
 import HistoryView from '@/views/HistoryView.vue'
 import SupportView from '@/views/SupportView.vue'
+import AcceptTermsView from '@/views/AcceptTermsView.vue'
+import ChooseNicknameView from '@/views/ChooseNicknameView.vue'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: RoomsView
-    },
-    {
-      path: '/sign-up',
-      name: 'sign-up',
-      component: SignUpView,
-      meta: { requiresGuest: true }
-    },
-    {
-      path: '/sign-in',
-      name: 'sign-in',
-      component: SignInView,
-      meta: { requiresGuest: true }
-    },
+    { path: '/', name: 'home', component: RoomsView },
+    { path: '/sign-up', name: 'sign-up', component: SignUpView, meta: { requiresGuest: true } },
+    { path: '/sign-in', name: 'sign-in', component: SignInView, meta: { requiresGuest: true } },
     {
       path: '/account',
       name: 'account',
@@ -40,56 +28,66 @@ const router = createRouter({
       component: HistoryView,
       meta: { requiresAuth: true }
     },
-    {
-      path: '/support',
-      name: 'support',
-      component: SupportView
-    },
+    { path: '/support', name: 'support', component: SupportView },
     {
       path: '/room/:id',
       name: 'room',
       component: RoomView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresPlayReady: true }
+    },
+    {
+      path: '/accept-terms',
+      name: 'accept-terms',
+      component: AcceptTermsView,
+      meta: { requiresAuth: true, allowsBeforeGate: true }
+    },
+    {
+      path: '/choose-nickname',
+      name: 'choose-nickname',
+      component: ChooseNicknameView,
+      meta: { requiresAuth: true, allowsBeforeGate: true }
     }
   ]
 })
 
-// Navigation guards for authentication
+// Navigation guards: auth → nickname-required → terms-accepted → route-specific.
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthenticationStore()
 
-  // Wait for auth store to be initialized
   if (!authStore.isInitialized) {
     await authStore.initializeAuth()
   }
 
   const isAuthenticated = authStore.isAuthenticated
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
-
-  console.log('[Router] Navigation guard:', {
-    to: to.name,
-    from: from.name,
-    isAuthenticated,
-    requiresAuth,
-    requiresGuest
-  })
+  const requiresAuth = to.matched.some((r) => r.meta.requiresAuth)
+  const requiresGuest = to.matched.some((r) => r.meta.requiresGuest)
+  const allowsBeforeGate = to.matched.some((r) => r.meta.allowsBeforeGate)
 
   if (requiresAuth && !isAuthenticated) {
-    // Protected route but user is not authenticated
-    console.log('[Router] Redirecting to sign-in: protected route requires authentication')
-    next({
-      name: 'sign-in',
-      query: { redirect: to.fullPath }
-    })
-  } else if (requiresGuest && isAuthenticated) {
-    // Guest-only route but user is authenticated
-    console.log('[Router] Redirecting to home: guest route but user is authenticated')
-    next({ name: 'home' })
-  } else {
-    // Allow navigation
-    next()
+    return next({ name: 'sign-in', query: { redirect: to.fullPath } })
   }
+  if (requiresGuest && isAuthenticated) {
+    return next({ name: 'home' })
+  }
+
+  if (isAuthenticated && !allowsBeforeGate) {
+    if (authStore.nicknameRequired) {
+      return next({ name: 'choose-nickname', query: { redirect: to.fullPath } })
+    }
+    if (!authStore.termsAccepted) {
+      return next({ name: 'accept-terms', query: { redirect: to.fullPath } })
+    }
+  }
+
+  // Don't show gate views once they're no longer needed.
+  if (to.name === 'choose-nickname' && isAuthenticated && !authStore.nicknameRequired) {
+    return next({ name: 'home' })
+  }
+  if (to.name === 'accept-terms' && isAuthenticated && authStore.termsAccepted) {
+    return next({ name: 'home' })
+  }
+
+  next()
 })
 
 export default router

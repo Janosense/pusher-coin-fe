@@ -1,5 +1,5 @@
 <script setup>
-import { watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import IconAccount from '@/components/icons/IconAccount.vue'
 import IconMain from '@/components/icons/IconMain.vue'
@@ -10,16 +10,21 @@ import IconLogOut from '@/components/icons/IconLogOut.vue'
 import { useNavigationStore } from '@/stores/navigation.js'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import LogoutConfirmModal from '@/components/LogoutConfirmModal.vue'
 import IconSignUp from '@/components/icons/IconSignUp.vue'
 
 const navigationStore = useNavigationStore()
 const authentication = useAuthenticationStore()
 const route = useRoute()
 
-// Handle logout
-const handleLogout = () => {
-  console.log('[Navigation] User logout requested')
-  authentication.logout()
+const isLogoutOpen = ref(false)
+
+const openLogoutConfirm = () => {
+  isLogoutOpen.value = true
+}
+
+const closeLogoutConfirm = () => {
+  isLogoutOpen.value = false
   navigationStore.closeNavigation()
 }
 
@@ -72,7 +77,7 @@ watch(
         </RouterLink>
       </li>
       <li v-if="authentication.isAuthenticated" class="navigation__item">
-        <a href="#" class="navigation__link" @click.prevent="handleLogout">
+        <a href="#" class="navigation__link" @click.prevent="openLogoutConfirm">
           <IconLogOut class="navigation__icon" />
           <span class="navigation__title">Log out</span>
         </a>
@@ -80,6 +85,7 @@ watch(
     </ul>
     <LanguageSwitcher />
   </nav>
+  <LogoutConfirmModal :is-open="isLogoutOpen" @close="closeLogoutConfirm" />
 </template>
 
 <style scoped>
