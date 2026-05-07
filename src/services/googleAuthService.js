@@ -114,23 +114,23 @@ class GoogleAuthService {
         throw new Error('Invalid response from backend')
       }
 
-      // Check if 2FA is required
-      if (response.data.requires_2fa || response.data.requires_verification) {
-        console.log('[Google Auth] 2FA verification required')
+      // Check if email-code verification is required (canonical backend flag: requires_verification)
+      if (response.data.requires_verification) {
+        console.log('[Google Auth] Email verification required')
         return {
           success: true,
-          requires2FA: true,
+          requiresVerification: true,
           idToken: credential,
           message: response.data.message || 'Verification code sent'
         }
       }
 
-      // Direct login without 2FA
+      // Direct login without email verification
       console.log('[Google Auth] Backend authentication successful')
 
       return {
         success: true,
-        requires2FA: false,
+        requiresVerification: false,
         token: response.data.token,
         user: {
           id: response.data.user_id,

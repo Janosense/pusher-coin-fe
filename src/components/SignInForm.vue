@@ -180,7 +180,7 @@ const goBackToCredentials = () => {
   }
 }
 
-const handleGoogleRequires2FA = () => {
+const handleGoogleRequiresVerification = () => {
   // Google authentication requires 2FA, show step 2
   console.log('[SignInForm] Google authentication requires 2FA, showing verification step')
   currentStep.value = 2
@@ -237,7 +237,7 @@ const submitButtonText = computed(() => {
       <GoogleSignInButton
         :redirect="redirect"
         button-text="signin_with"
-        @requires2FA="handleGoogleRequires2FA"
+        @requires-verification="handleGoogleRequiresVerification"
       />
 
       <div class="form__divider">

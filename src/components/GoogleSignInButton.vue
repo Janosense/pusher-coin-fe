@@ -19,7 +19,7 @@ const buttonContainer = ref(null)
 const isLoading = ref(false)
 const error = ref('')
 
-const emit = defineEmits(['requires2FA'])
+const emit = defineEmits(['requires-verification'])
 
 /**
  * Handle credential response from Google
@@ -36,15 +36,15 @@ const handleCredentialResponse = async (response) => {
     const authResult = await googleAuthService.authenticateWithBackend(response.credential)
 
     if (authResult.success) {
-      // Check if 2FA is required
-      if (authResult.requires2FA) {
-        console.log('[GoogleSignInButton] 2FA required, storing token and showing verification step')
+      // Check if email-code verification is required
+      if (authResult.requiresVerification) {
+        console.log('[GoogleSignInButton] Verification required, storing token and showing verification step')
 
         // Store the Google ID token in the auth store
         await authenticationStore.requestGoogleVerification(authResult.idToken)
 
         // Emit event to show step 2 of the form
-        emit('requires2FA')
+        emit('requires-verification')
 
         console.log('[GoogleSignInButton] Verification step triggered')
       } else {

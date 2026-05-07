@@ -293,9 +293,9 @@ export const authService = {
       }
 
       // Make verification request via the JWT auth API
-      const response = await authApi.post('/google-auth/verify', {
+      const response = await authApi.post('/google-auth/verify-code', {
         id_token: credential,
-        code: code
+        verification_code: code
       })
 
       // Validate response structure
