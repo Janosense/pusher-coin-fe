@@ -15,7 +15,8 @@ const mapEnvelope = (data) => ({
     displayName: data.user_display_name || data.user_email
   },
   termsAccepted: !!data.terms_accepted,
-  nicknameRequired: !!data.nickname_required
+  nicknameRequired: !!data.nickname_required,
+  emailVerified: !!data.email_verified
 })
 
 const messageFor = (error, fallback) => {

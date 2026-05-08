@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
 import { authService } from '@/services/authService.js'
+import accountService from '@/services/accountService.js'
 import sessionService from '@/services/sessionService.js'
 
 const TOKEN_KEY = 'pusher_coin_auth_token'
@@ -16,6 +17,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
   const accessTokenExpiresAt = ref(null)
   const termsAccepted = ref(false)
   const nicknameRequired = ref(false)
+  const emailVerified = ref(false)
 
   // UI state
   const isLoading = ref(false)
@@ -57,7 +59,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         refreshToken: refreshTokenValue.value,
         accessTokenExpiresAt: accessTokenExpiresAt.value,
         termsAccepted: termsAccepted.value,
-        nicknameRequired: nicknameRequired.value
+        nicknameRequired: nicknameRequired.value,
+        emailVerified: emailVerified.value
       }
       if (user.value || refreshTokenValue.value) {
         localStorage.setItem(USER_KEY, JSON.stringify(payload))
@@ -80,6 +83,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
       accessTokenExpiresAt.value = parsed.accessTokenExpiresAt || null
       termsAccepted.value = !!parsed.termsAccepted
       nicknameRequired.value = !!parsed.nicknameRequired
+      emailVerified.value = !!parsed.emailVerified
     } catch (err) {
       console.warn('[Auth Store] Failed to hydrate auth state:', err.message)
       clearLocal()
@@ -93,6 +97,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     accessTokenExpiresAt.value = null
     termsAccepted.value = false
     nicknameRequired.value = false
+    emailVerified.value = false
     error.value = null
     clearGoogleAuthState()
     try {
@@ -111,8 +116,29 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     accessTokenExpiresAt.value = Date.now() + envelope.accessTokenExpiresIn * 1000
     termsAccepted.value = envelope.termsAccepted
     nicknameRequired.value = envelope.nicknameRequired
+    emailVerified.value = !!envelope.emailVerified
     persist()
     sessionService.start(handleInactivityTimeout, INACTIVITY_MS)
+  }
+
+  const refreshMe = async () => {
+    try {
+      const me = await accountService.getMe()
+      emailVerified.value = me.emailVerified
+      if (user.value) {
+        user.value = {
+          ...user.value,
+          email: me.email,
+          username: me.nickname,
+          displayName: me.nickname
+        }
+      }
+      persist()
+      return { success: true, me }
+    } catch (err) {
+      console.warn('[Auth Store] refreshMe failed:', err.message)
+      return { success: false, error: err.message }
+    }
   }
 
   // ---------------- actions ----------------
@@ -255,6 +281,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
       accessTokenExpiresAt.value = Date.now() + env.access_token_expires_in * 1000
       termsAccepted.value = !!env.terms_accepted
       nicknameRequired.value = !!env.nickname_required
+      emailVerified.value = !!env.email_verified
       persist()
     })
   }
@@ -269,6 +296,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     accessTokenExpiresAt: computed(() => accessTokenExpiresAt.value),
     termsAccepted: computed(() => termsAccepted.value),
     nicknameRequired: computed(() => nicknameRequired.value),
+    emailVerified: computed(() => emailVerified.value),
 
     isLoading: computed(() => isLoading.value),
     error: computed(() => error.value),
@@ -288,6 +316,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     verifyGoogleCode,
     acceptTerms,
     setNickname,
+    applyEnvelope,
+    refreshMe,
     logout,
     initializeAuth,
     clearError,

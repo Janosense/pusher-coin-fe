@@ -8,6 +8,7 @@ import HistoryView from '@/views/HistoryView.vue'
 import SupportView from '@/views/SupportView.vue'
 import AcceptTermsView from '@/views/AcceptTermsView.vue'
 import ChooseNicknameView from '@/views/ChooseNicknameView.vue'
+import ConfirmEmailView from '@/views/ConfirmEmailView.vue'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 
 const router = createRouter({
@@ -46,6 +47,12 @@ const router = createRouter({
       name: 'choose-nickname',
       component: ChooseNicknameView,
       meta: { requiresAuth: true, allowsBeforeGate: true }
+    },
+    {
+      path: '/confirm-email',
+      name: 'confirm-email',
+      component: ConfirmEmailView,
+      meta: { allowsBeforeGate: true }
     }
   ]
 })
@@ -77,6 +84,13 @@ router.beforeEach(async (to, from, next) => {
     if (!authStore.termsAccepted) {
       return next({ name: 'accept-terms', query: { redirect: to.fullPath } })
     }
+  }
+
+  // Play-ready routes additionally require a verified email. Bounce the
+  // user back to /account so they can fix it (the banner explains why).
+  const requiresPlayReady = to.matched.some((r) => r.meta.requiresPlayReady)
+  if (isAuthenticated && requiresPlayReady && !authStore.emailVerified) {
+    return next({ path: '/account', query: { reason: 'verify-email' } })
   }
 
   // Don't show gate views once they're no longer needed.
