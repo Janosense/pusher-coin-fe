@@ -33,8 +33,7 @@ const router = createRouter({
     {
       path: '/room/:id',
       name: 'room',
-      component: RoomView,
-      meta: { requiresAuth: true, requiresPlayReady: true }
+      component: RoomView
     },
     {
       path: '/accept-terms',

@@ -3,6 +3,12 @@ import IconSendMessage from '@/components/icons/IconSendMessage.vue'
 import { ref } from 'vue'
 import { useChatStore } from '@/stores/chat.js'
 
+const props = defineProps({
+  readonly: { type: Boolean, default: false }
+})
+
+const emit = defineEmits(['send-attempted'])
+
 const chatStore = useChatStore()
 const message = ref('')
 const messages = ref([
@@ -34,6 +40,10 @@ const messages = ref([
 const chatListRef = ref(null)
 
 const sendMessage = () => {
+  if (props.readonly) {
+    emit('send-attempted')
+    return
+  }
   if (message.value) {
     messages.value.push({
       user: 'Player 17',
@@ -67,9 +77,11 @@ const sendMessage = () => {
       <input
         v-model="message"
         @keyup.enter="sendMessage"
+        @focus="readonly && emit('send-attempted')"
         type="text"
         class="chat__input"
-        placeholder="Type here.."
+        :placeholder="readonly ? 'Sign in to chat' : 'Type here..'"
+        :readonly="readonly"
       />
       <button class="chat__send-message" @click="sendMessage">
         <IconSendMessage />
