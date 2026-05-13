@@ -1,6 +1,9 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import IconRoomEnter from '@/components/icons/IconRoomEnter.vue'
+import RoomStatusBadge from '@/components/RoomStatusBadge.vue'
+import NextBroadcastCountdown from '@/components/NextBroadcastCountdown.vue'
+import { useRoomsStore } from '@/stores/rooms.js'
 
 const props = defineProps({
   view: {
@@ -9,16 +12,17 @@ const props = defineProps({
   }
 })
 
-const rooms = ref([
-  { id: 1 },
-  { id: 2 },
-  { id: 3 },
-  { id: 4 },
-  { id: 5 },
-  { id: 6 },
-  { id: 7 },
-  { id: 8 }
-])
+const roomsStore = useRoomsStore()
+
+const rooms = computed(() => roomsStore.items)
+const isLoading = computed(() => roomsStore.isLoading)
+const error = computed(() => roomsStore.error)
+const isLandscape = computed(() => props.view === 'landscape')
+const showSkeleton = computed(() => isLoading.value && rooms.value.length === 0)
+const showEmpty = computed(
+  () => !isLoading.value && !error.value && rooms.value.length === 0
+)
+
 const isRoomsOpen = ref(false)
 const toggleRooms = () => {
   if (props.view === 'sidebar') {
@@ -36,7 +40,12 @@ onMounted(() => {
       isRoomsOpen.value = true
     }
   })
+
+  roomsStore.fetchRooms()
 })
+
+// Skeleton placeholder count — matches the original visual rhythm of 8 tiles.
+const skeletonItems = [0, 1, 2, 3, 4, 5, 6, 7]
 </script>
 
 <template>
@@ -46,7 +55,26 @@ onMounted(() => {
     @click="toggleRooms"
   >
     <div class="wrapper rooms__wrapper">
-      <ul class="rooms__list">
+      <ul v-if="showSkeleton" class="rooms__list rooms__list--skeleton">
+        <li
+          v-for="i in skeletonItems"
+          :key="`skeleton-${i}`"
+          class="rooms__item rooms__item--skeleton"
+        >
+          <div class="rooms__image-holder rooms__image-holder--skeleton"></div>
+          <span class="rooms__title rooms__title--skeleton">&nbsp;</span>
+        </li>
+      </ul>
+
+      <div v-else-if="error" class="rooms__message rooms__message--error">
+        Couldn't load rooms. <button @click.stop="roomsStore.fetchRooms({ force: true })">Retry</button>
+      </div>
+
+      <div v-else-if="showEmpty" class="rooms__message">
+        No rooms configured yet.
+      </div>
+
+      <ul v-else class="rooms__list">
         <li
           v-for="(room, index) in rooms"
           class="rooms__item"
@@ -59,8 +87,17 @@ onMounted(() => {
           >
             <div class="rooms__image-holder"></div>
             <span class="rooms__title">
-              Room {{ index + 1 }} <IconRoomEnter class="rooms__icon-enter" />
+              {{ room.name }} <IconRoomEnter class="rooms__icon-enter" />
             </span>
+            <div v-if="isLandscape" class="rooms__meta">
+              <RoomStatusBadge :status="room.status" />
+              <NextBroadcastCountdown
+                v-if="room.status === 'available'"
+                :current-window="room.currentWindow"
+                :next-window="room.nextWindow"
+                @is-live="roomsStore.fetchRoom(room.id)"
+              />
+            </div>
           </div>
         </li>
       </ul>
@@ -343,6 +380,60 @@ onMounted(() => {
 
   @media (min-width: 1280px) {
     display: inline-flex;
+  }
+}
+
+.rooms__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 4px;
+  margin-top: 8px;
+}
+
+.rooms__message {
+  padding: 48px 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+.rooms__message--error button {
+  margin-left: 8px;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--yellow);
+  border: 1px solid var(--yellow);
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.rooms__image-holder--skeleton {
+  background: rgba(255, 255, 255, 0.05);
+  animation: room-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.rooms__image-holder--skeleton::before,
+.rooms__image-holder--skeleton::after {
+  display: none;
+}
+
+.rooms__title--skeleton {
+  display: inline-block;
+  width: 60%;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  animation: room-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes room-skeleton-pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.9;
   }
 }
 </style>
