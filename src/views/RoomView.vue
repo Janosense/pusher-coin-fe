@@ -11,15 +11,18 @@ import LiveStream from '@/components/LiveStream.vue'
 import SignInForm from '@/components/SignInForm.vue'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 import { useRoomsStore } from '@/stores/rooms.js'
+import { useWalletStore } from '@/stores/wallet.js'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthenticationStore()
 const roomsStore = useRoomsStore()
+const walletStore = useWalletStore()
 
 const isAuthed = computed(() => authStore.isAuthenticated)
 const roomId = computed(() => Number(route.params.id))
 const room = computed(() => roomsStore.items.find((r) => r.id === roomId.value) || null)
+const balanceCoins = computed(() => walletStore.balanceCoins)
 
 const isReplenishmentBalanceOverlayOpen = ref(false)
 const isPlaceBetOverlayOpen = ref(false)
@@ -32,8 +35,16 @@ const loadRoom = async () => {
   await roomsStore.fetchRoom(roomId.value)
 }
 
-onMounted(loadRoom)
+onMounted(async () => {
+  await loadRoom()
+  if (isAuthed.value) {
+    walletStore.fetchWallet()
+  }
+})
 watch(roomId, loadRoom)
+watch(isAuthed, (authed) => {
+  if (authed) walletStore.fetchWallet()
+})
 
 const promptSignIn = () => {
   isSignInOverlayOpen.value = true
@@ -44,15 +55,23 @@ const onPlayClick = () => {
     promptSignIn()
     return
   }
-  // Authenticated players can't play until email-verified; the existing
-  // router guard on requiresPlayReady redirects to /account. Phase 6 wires
-  // the toss flow — for now, opening the bet overlay matches the prior
-  // behaviour.
   if (!authStore.emailVerified) {
     router.push({ path: '/account', query: { reason: 'verify-email' } })
     return
   }
+  // ROADMAP §4.5.1: balance 0 → Play redirects to top-up.
+  if (balanceCoins.value === 0) {
+    isReplenishmentBalanceOverlayOpen.value = true
+    return
+  }
   isPlaceBetOverlayOpen.value = true
+}
+
+// PlaceBet's "Add balance" link bubbles up here so we can swap the
+// open overlay rather than stacking two.
+const switchToReplenishment = () => {
+  isPlaceBetOverlayOpen.value = false
+  isReplenishmentBalanceOverlayOpen.value = true
 }
 </script>
 
@@ -85,7 +104,7 @@ const onPlayClick = () => {
     :is-overlay-open="isReplenishmentBalanceOverlayOpen"
     @close-overlay="isReplenishmentBalanceOverlayOpen = false"
     :title="'Replenish balance'"
-    :caption="'Your balance: 14 coins'"
+    :caption="`Your balance: ${balanceCoins} coins`"
   >
     <ReplenishmentBalance />
   </Overlay>
@@ -93,9 +112,9 @@ const onPlayClick = () => {
     :is-overlay-open="isPlaceBetOverlayOpen"
     @close-overlay="isPlaceBetOverlayOpen = false"
     :title="'Place your bet'"
-    :caption="'Your balance: 14 coins'"
+    :caption="`Your balance: ${balanceCoins} coins`"
   >
-    <PlaceBet />
+    <PlaceBet @open-replenishment-balance-overlay="switchToReplenishment" />
   </Overlay>
   <Overlay :is-overlay-open="isSignInOverlayOpen" @close-overlay="isSignInOverlayOpen = false">
     <SignInForm :redirect="{ name: 'room', params: { id: roomId } }" />

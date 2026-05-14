@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import IconSound from '@/components/icons/IconSound.vue'
 import IconChat from '@/components/icons/IconChat.vue'
@@ -6,9 +7,23 @@ import IconAccount from '@/components/icons/IconAccount.vue'
 import IconCoin from '@/components/icons/IconCoin.vue'
 
 import { useChatStore } from '@/stores/chat.js'
+import { useAuthenticationStore } from '@/stores/authentication.js'
+import { useWalletStore } from '@/stores/wallet.js'
 
 const route = useRoute()
 const chatStore = useChatStore()
+const authStore = useAuthenticationStore()
+const walletStore = useWalletStore()
+
+const nickname = computed(
+  () => authStore.user?.username || authStore.user?.displayName || 'Player'
+)
+const balanceCoins = computed(() => walletStore.balanceCoins)
+
+// Phase 6 owns the in-game "winnings" wiring; for now the field is
+// hidden so we don't lie about a value that isn't tracked yet
+// (ROADMAP §6.1: "winnings hidden when zero — show empty, never 0").
+const winningsCoins = computed(() => 0)
 </script>
 
 <template>
@@ -21,7 +36,7 @@ const chatStore = useChatStore()
             <div class="user-controls__photo-holder">
               <IconAccount class="user-controls__icon user-controls__icon--account" />
             </div>
-            <span class="user-controls__nickname">Player 17</span>
+            <span class="user-controls__nickname" :title="nickname">{{ nickname }}</span>
           </div>
         </div>
         <div class="user-controls__layout-inner user-controls__layout-inner--controls">
@@ -51,14 +66,14 @@ const chatStore = useChatStore()
               @click="$emit('openReplenishmentBalanceOverlay')"
             >
               <IconCoin />
-              1000
+              {{ balanceCoins }}
             </button>
           </div>
         </div>
-        <div class="user-controls__layout-inner">
+        <div v-if="winningsCoins > 0" class="user-controls__layout-inner">
           <div class="user-controls__counter">
             <span class="user-controls__title">Winning</span>
-            <span class="user-controls__counter-value">1267890</span>
+            <span class="user-controls__counter-value">{{ winningsCoins }}</span>
           </div>
         </div>
       </div>
