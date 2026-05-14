@@ -4,12 +4,16 @@ import { useRoute, useRouter } from 'vue-router'
 import Queue from '@/components/Queue.vue'
 import Rooms from '@/components/Rooms.vue'
 import FacelessAvatar from '@/components/FacelessAvatar.vue'
+import Overlay from '@/components/Overlay.vue'
+import ReplenishmentBalance from '@/components/ReplenishmentBalance.vue'
 import accountService from '@/services/accountService.js'
 import { useAuthenticationStore } from '@/stores/authentication.js'
+import { useWalletStore } from '@/stores/wallet.js'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthenticationStore()
+const walletStore = useWalletStore()
 
 const me = ref(null)
 const isLoading = ref(false)
@@ -38,9 +42,41 @@ const passwordError = ref('')
 const passwordNotice = ref('')
 const passwordBusy = ref(false)
 
-const balanceMoney = computed(() => Number(me.value?.balanceMoney || 0).toFixed(2))
-const balanceCoins = computed(() => Number(me.value?.balanceCoins || 0))
+// Prefer the wallet store (refreshed after a top-up return) over /user/me,
+// which is only refetched on full account reloads.
+const balanceMoney = computed(() => walletStore.isInitialized
+  ? walletStore.balanceMoney
+  : Number(me.value?.balanceMoney || 0).toFixed(2))
+const balanceCoins = computed(() => walletStore.isInitialized
+  ? walletStore.balanceCoins
+  : Number(me.value?.balanceCoins || 0))
 const emailVerified = computed(() => !!me.value?.emailVerified)
+
+// ---- top-up overlay + return-from-LiqPay banner ----
+const isTopupOverlayOpen = ref(false)
+const topupBanner = ref(null) // 'success' | 'cancel' | null
+const topupRefreshing = ref(false)
+
+const handleTopupReturn = async (status) => {
+  if (status === 'success') {
+    topupBanner.value = 'success'
+    topupRefreshing.value = true
+    await walletStore.fetchWallet()
+    topupRefreshing.value = false
+  } else if (status === 'cancel') {
+    topupBanner.value = 'cancel'
+  }
+  // Strip the query param so a page reload doesn't re-trigger the banner.
+  if (status) {
+    const { topup, ...rest } = route.query
+    void topup
+    router.replace({ path: '/account', query: rest })
+  }
+}
+
+const dismissTopupBanner = () => {
+  topupBanner.value = null
+}
 
 const loadMe = async () => {
   isLoading.value = true
@@ -56,10 +92,13 @@ const loadMe = async () => {
 }
 
 onMounted(async () => {
-  await loadMe()
+  await Promise.all([loadMe(), walletStore.fetchWallet()])
   if (route.query.reason === 'verify-email') {
     await nextTick()
     verifyBanner.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+  if (route.query.topup) {
+    handleTopupReturn(String(route.query.topup))
   }
 })
 
@@ -195,7 +234,11 @@ const handleGatedAction = (action) => {
     router.replace({ path: '/account', query: { reason: 'verify-email' } })
     return
   }
-  // Phase 4 owns the destination; stash the intent for later wiring.
+  if (action === 'topup') {
+    isTopupOverlayOpen.value = true
+    return
+  }
+  // Withdrawal flow lands in Step 4.
   router.push({ path: `/account/${action}` }).catch(() => {})
 }
 </script>
@@ -212,6 +255,33 @@ const handleGatedAction = (action) => {
           <div v-if="generalError" class="account__error">{{ generalError }}</div>
 
           <div v-if="me" class="account">
+            <div
+              v-if="topupBanner === 'success'"
+              class="account__banner account__banner--success"
+              role="status"
+            >
+              <span class="account__banner-dot account__banner-dot--success" aria-hidden="true"></span>
+              <div class="account__banner-body">
+                <strong>Payment received.</strong>
+                <span v-if="topupRefreshing">Updating your balance…</span>
+                <span v-else>Your balance has been updated.</span>
+              </div>
+              <button type="button" class="button" @click="dismissTopupBanner">Dismiss</button>
+            </div>
+
+            <div
+              v-if="topupBanner === 'cancel'"
+              class="account__banner"
+              role="status"
+            >
+              <span class="account__banner-dot" aria-hidden="true"></span>
+              <div class="account__banner-body">
+                <strong>Top-up canceled.</strong>
+                Your wallet was not charged.
+              </div>
+              <button type="button" class="button" @click="dismissTopupBanner">Dismiss</button>
+            </div>
+
             <div
               v-if="!emailVerified"
               ref="verifyBanner"
@@ -264,7 +334,7 @@ const handleGatedAction = (action) => {
               </div>
               <div class="account__action-holder">
                 <button class="account__action" :disabled="!emailVerified" @click="handleGatedAction('withdraw')">
-                  <span>${{ balanceMoney }}</span>
+                  <span>₴{{ balanceMoney }}</span>
                   <span>Get money</span>
                 </button>
               </div>
@@ -428,6 +498,14 @@ const handleGatedAction = (action) => {
       @on-room-click="(roomId) => router.push({ name: 'room', params: { id: roomId } })"
     />
   </div>
+  <Overlay
+    :is-overlay-open="isTopupOverlayOpen"
+    @close-overlay="isTopupOverlayOpen = false"
+    :title="'Replenish balance'"
+    :caption="`Your balance: ${balanceCoins} coins`"
+  >
+    <ReplenishmentBalance />
+  </Overlay>
 </template>
 
 <style scoped>
@@ -553,6 +631,16 @@ const handleGatedAction = (action) => {
   background-color: #dc2626;
   box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.2);
   flex-shrink: 0;
+}
+
+.account__banner--success {
+  background-color: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+.account__banner-dot--success {
+  background-color: #16a34a;
+  box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.2);
 }
 
 .account__banner-body {
