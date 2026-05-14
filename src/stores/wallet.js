@@ -50,6 +50,21 @@ export const useWalletStore = defineStore('wallet', () => {
     }
   }
 
+  const requestWithdrawal = async ({ coinQty }) => {
+    try {
+      const result = await walletService.withdraw({ coinQty })
+      // Wallet was debited server-side — refresh to reflect that.
+      await fetchWallet()
+      return { success: true, ...result }
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || err.message,
+        code: err.response?.data?.code
+      }
+    }
+  }
+
   return {
     balanceMoney: computed(() => balanceMoney.value),
     balanceCoins: computed(() => balanceCoins.value),
@@ -59,6 +74,7 @@ export const useWalletStore = defineStore('wallet', () => {
     error: computed(() => error.value),
     isInitialized: computed(() => isInitialized.value),
     fetchWallet,
-    startTopup
+    startTopup,
+    requestWithdrawal
   }
 })

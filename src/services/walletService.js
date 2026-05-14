@@ -42,6 +42,18 @@ export const walletService = {
       unit_price: unitPrice
     })
     return mapTopupResponse(response.data)
+  },
+
+  async withdraw({ coinQty }) {
+    const response = await api.post('/wallet/withdraw', {
+      coin_qty: coinQty
+    })
+    return {
+      transactionId: response.data.transaction_id,
+      status: response.data.status,
+      amountCoins: Number(response.data.amount_coins || 0),
+      amountMoney: response.data.amount_money
+    }
   }
 }
 

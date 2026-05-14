@@ -6,6 +6,7 @@ import Rooms from '@/components/Rooms.vue'
 import FacelessAvatar from '@/components/FacelessAvatar.vue'
 import Overlay from '@/components/Overlay.vue'
 import ReplenishmentBalance from '@/components/ReplenishmentBalance.vue'
+import WithdrawalRequest from '@/components/WithdrawalRequest.vue'
 import accountService from '@/services/accountService.js'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 import { useWalletStore } from '@/stores/wallet.js'
@@ -56,6 +57,22 @@ const emailVerified = computed(() => !!me.value?.emailVerified)
 const isTopupOverlayOpen = ref(false)
 const topupBanner = ref(null) // 'success' | 'cancel' | null
 const topupRefreshing = ref(false)
+
+// ---- withdrawal overlay + confirmation banner ----
+const isWithdrawOverlayOpen = ref(false)
+const withdrawConfirmation = ref(null) // { amountCoins, amountMoney } | null
+
+const onWithdrawalSubmitted = (result) => {
+  isWithdrawOverlayOpen.value = false
+  withdrawConfirmation.value = {
+    amountCoins: result.amountCoins,
+    amountMoney: result.amountMoney
+  }
+}
+
+const dismissWithdrawConfirmation = () => {
+  withdrawConfirmation.value = null
+}
 
 const handleTopupReturn = async (status) => {
   if (status === 'success') {
@@ -238,8 +255,10 @@ const handleGatedAction = (action) => {
     isTopupOverlayOpen.value = true
     return
   }
-  // Withdrawal flow lands in Step 4.
-  router.push({ path: `/account/${action}` }).catch(() => {})
+  if (action === 'withdraw') {
+    isWithdrawOverlayOpen.value = true
+    return
+  }
 }
 </script>
 
@@ -280,6 +299,20 @@ const handleGatedAction = (action) => {
                 Your wallet was not charged.
               </div>
               <button type="button" class="button" @click="dismissTopupBanner">Dismiss</button>
+            </div>
+
+            <div
+              v-if="withdrawConfirmation"
+              class="account__banner account__banner--success"
+              role="status"
+            >
+              <span class="account__banner-dot account__banner-dot--success" aria-hidden="true"></span>
+              <div class="account__banner-body">
+                <strong>Withdrawal requested.</strong>
+                {{ withdrawConfirmation.amountCoins }} coins (₴{{ withdrawConfirmation.amountMoney }})
+                will be paid out after admin review.
+              </div>
+              <button type="button" class="button" @click="dismissWithdrawConfirmation">Dismiss</button>
             </div>
 
             <div
@@ -505,6 +538,14 @@ const handleGatedAction = (action) => {
     :caption="`Your balance: ${balanceCoins} coins`"
   >
     <ReplenishmentBalance />
+  </Overlay>
+  <Overlay
+    :is-overlay-open="isWithdrawOverlayOpen"
+    @close-overlay="isWithdrawOverlayOpen = false"
+    :title="'Withdraw coins'"
+    :caption="`Your balance: ${balanceCoins} coins`"
+  >
+    <WithdrawalRequest @submitted="onWithdrawalSubmitted" />
   </Overlay>
 </template>
 
