@@ -4,6 +4,15 @@ import userService from '../services/userService.js'
 import { useRouter } from 'vue-router'
 import GoogleSignInButton from './GoogleSignInButton.vue'
 import AppleSignInButton from './AppleSignInButton.vue'
+import googleAuthService from '@/services/googleAuthService.js'
+import appleAuthService from '@/services/appleAuthService.js'
+
+// Both social buttons hide themselves when their client ID is absent
+// (Google is parked, Apple awaits enrollment). Without this the divider
+// below them announces an empty section.
+const hasSocialLogin = computed(
+  () => googleAuthService.isConfigured() || appleAuthService.isConfigured()
+)
 
 const router = useRouter()
 
@@ -127,7 +136,7 @@ const isFormValid = computed(() => {
     <GoogleSignInButton button-text="signup_with" />
     <AppleSignInButton button-text="Sign up with Apple" />
 
-    <div class="form__divider">
+    <div v-if="hasSocialLogin" class="form__divider">
       <span class="form__divider-text">Or sign up with email</span>
     </div>
 

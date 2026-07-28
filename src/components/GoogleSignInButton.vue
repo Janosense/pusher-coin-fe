@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import googleAuthService from '@/services/googleAuthService.js'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 
@@ -14,6 +14,13 @@ const props = defineProps({
 })
 
 const authenticationStore = useAuthenticationStore()
+
+// Google sign-in is switched off while the project runs without Google
+// credentials — see ROADMAP Phase 1 §2. An empty `VITE_GOOGLE_CLIENT_ID`
+// hides the button and stops it touching Google Identity Services; the
+// GIS <script> is commented out in index.html to match. Restoring both
+// re-enables the flow with no other code change.
+const isAvailable = computed(() => googleAuthService.isConfigured())
 
 const buttonContainer = ref(null)
 const isLoading = ref(false)
@@ -55,6 +62,8 @@ const handleCredentialResponse = async (response) => {
 }
 
 onMounted(async () => {
+  if (!isAvailable.value) return
+
   try {
     // Initialize Google Sign-In with callback
     await googleAuthService.initialize(handleCredentialResponse)
@@ -83,7 +92,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="google-signin">
+  <div v-if="isAvailable" class="google-signin">
     <!-- Google button container -->
     <div
       ref="buttonContainer"

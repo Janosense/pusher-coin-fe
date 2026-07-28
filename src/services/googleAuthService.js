@@ -14,6 +14,20 @@ class GoogleAuthService {
   }
 
   /**
+   * Whether this build has a Google client ID. Empty
+   * `VITE_GOOGLE_CLIENT_ID` switches the whole flow off: the button
+   * doesn't render and the GIS script is never loaded. Same gate as
+   * `appleAuthService.isConfigured()`.
+   *
+   * The backend stays capable either way — `GoogleAuthController`
+   * answers `google_not_configured` on its own terms — so re-enabling
+   * is a matter of putting the client ID back in `.env`.
+   */
+  isConfigured() {
+    return !!this.clientId
+  }
+
+  /**
    * Wait for Google library to load
    * @returns {Promise<void>}
    */
