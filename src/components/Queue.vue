@@ -1,13 +1,21 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import iconCoin from '@/assets/images/iconCoin.png'
-import { useRoute } from 'vue-router'
+import { useQueueStore } from '@/stores/queue.js'
 
-const route = useRoute()
+const queueStore = useQueueStore()
+
+// The counter is players actually queued, not everyone watching
+// (ROADMAP §6.2: "online players = users in queue, not just watching").
+const entries = computed(() => queueStore.entries)
+const onlineCount = computed(() => queueStore.onlineCount)
+const currentTurnUserId = computed(() => queueStore.currentTurnUserId)
+const myUserId = computed(() => queueStore.myUserId)
+const headEntry = computed(() => entries.value[0] || null)
+
 const isQueueOpen = ref(false)
 const listItemHeight = ref(document.documentElement.clientWidth >= 1280 ? 60 : 48)
 const queueListRef = ref(null)
-const activeUsers = [...Array(24).keys()]
 let queueOpenStateTimer = null
 
 const setListItemHeight = () => {
@@ -56,59 +64,55 @@ onMounted(() => {
   <div class="queue" :class="{ 'queue--open': isQueueOpen }" @click="toggleQueue">
     <header class="queue__header">
       <h2 class="queue__title">Queue</h2>
-      <span class="queue__users-counter">42{{ route.name === 'room' ? '/100' : '' }} Players</span>
+      <span class="queue__users-counter">
+        {{ onlineCount }} {{ onlineCount === 1 ? 'Player' : 'Players' }}
+      </span>
     </header>
+
     <ul
       class="queue__list"
       ref="queueListRef"
       @scroll="clearQueueTimeout"
       @scrollend="setQueueTimeout"
     >
-      <li class="queue__item-fixed">
-        <span class="queue__number">1</span>
-        <div class="queue__photo-holder"></div>
-        <span class="queue__nickname">Player 1</span>
-        <div class="queue__balance">
-          <img :src="iconCoin" alt="coin" />
-          {{ 1000 }}
-        </div>
-        <span class="queue__dots"></span>
-      </li>
-      <li class="queue__item-fixed">
-        <span class="queue__number">17</span>
-        <div class="queue__photo-holder"></div>
-        <span class="queue__nickname">Player 17</span>
-        <div class="queue__balance">
-          <img :src="iconCoin" alt="coin" />
-          {{ 1000 }}
-        </div>
-      </li>
+      <li v-if="entries.length === 0" class="queue__empty">Nobody is queued yet.</li>
+
       <li
-        v-for="(item, index) in activeUsers"
-        :key="index"
+        v-for="(entry, index) in entries"
+        :key="entry.userId"
         :style="{
           top: listItemHeight * index + 'px',
           transitionDelay: isQueueOpen ? 0.3 + index / 30 + 's' : 0 + 's'
         }"
         class="queue__item"
-        :class="{ 'queue__item--active-user': item + 1 === 17 }"
+        :class="{
+          'queue__item--active-user': entry.userId === myUserId,
+          'queue__item--current-turn': entry.userId === currentTurnUserId
+        }"
       >
-        <span class="queue__number">{{ item + 1 }}</span>
+        <span class="queue__number">{{ index + 1 }}</span>
         <div class="queue__photo-holder"></div>
-        <span class="queue__nickname">Player {{ item + 1 }}</span>
+        <span class="queue__nickname">
+          {{ entry.nickname }}<template v-if="entry.userId === myUserId"> (you)</template>
+        </span>
         <div class="queue__balance">
           <img :src="iconCoin" alt="coin" />
-          {{ 1000 }}
+          {{ entry.coins }}
         </div>
       </li>
     </ul>
-    <div class="queue__active-user">
-      <span class="queue__number">17</span>
+
+    <!-- Whoever holds the machine right now, pinned so it stays visible
+         when the list is collapsed on narrow screens. -->
+    <div v-if="headEntry" class="queue__active-user">
+      <span class="queue__number">1</span>
       <div class="queue__photo-holder"></div>
-      <span class="queue__nickname">Player 17</span>
+      <span class="queue__nickname">
+        {{ headEntry.nickname }}<template v-if="headEntry.userId === myUserId"> (you)</template>
+      </span>
       <div class="queue__balance">
         <img :src="iconCoin" alt="coin" />
-        1000
+        {{ headEntry.coins }}
       </div>
     </div>
   </div>
@@ -476,5 +480,16 @@ onMounted(() => {
     column-gap: 8px;
     font-size: 16px;
   }
+}
+
+.queue__item--current-turn {
+  background: rgba(138, 79, 255, 0.22);
+  box-shadow: inset 3px 0 0 #8a4fff;
+}
+
+.queue__empty {
+  padding: 12px 16px;
+  opacity: 0.6;
+  font-size: 14px;
 }
 </style>

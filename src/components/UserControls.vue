@@ -9,21 +9,24 @@ import IconCoin from '@/components/icons/IconCoin.vue'
 import { useChatStore } from '@/stores/chat.js'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 import { useWalletStore } from '@/stores/wallet.js'
+import { useQueueStore } from '@/stores/queue.js'
 
 const route = useRoute()
 const chatStore = useChatStore()
 const authStore = useAuthenticationStore()
 const walletStore = useWalletStore()
+const queueStore = useQueueStore()
 
 const nickname = computed(
   () => authStore.user?.username || authStore.user?.displayName || 'Player'
 )
 const balanceCoins = computed(() => walletStore.balanceCoins)
 
-// Phase 6 owns the in-game "winnings" wiring; for now the field is
-// hidden so we don't lie about a value that isn't tracked yet
-// (ROADMAP §6.1: "winnings hidden when zero — show empty, never 0").
-const winningsCoins = computed(() => 0)
+// Winnings are per-turn, not lifetime: the bet session opens when the
+// player reaches the head of the queue and closes when their declared
+// coins run out. Still hidden at zero — ROADMAP §6.1 asks for an empty
+// field, never a literal 0.
+const winningsCoins = computed(() => queueStore.myWinningsCoins)
 </script>
 
 <template>

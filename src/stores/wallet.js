@@ -31,6 +31,16 @@ export const useWalletStore = defineStore('wallet', () => {
   }
 
   /**
+   * Adopt an authoritative balance returned by another endpoint —
+   * `POST /rooms/{id}/play` sends the post-debit figure back, so the
+   * in-room counter updates without a second wallet round trip.
+   */
+  const setBalanceCoins = (coins) => {
+    balanceCoins.value = Number(coins) || 0
+    isInitialized.value = true
+  }
+
+  /**
    * Start a top-up. Returns the LiqPay envelope so the caller can
    * submit a form POST to the hosted checkout. Doesn't navigate by
    * itself — the calling component owns that, so it can read the
@@ -74,6 +84,7 @@ export const useWalletStore = defineStore('wallet', () => {
     error: computed(() => error.value),
     isInitialized: computed(() => isInitialized.value),
     fetchWallet,
+    setBalanceCoins,
     startTopup,
     requestWithdrawal
   }

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserControls from '@/components/UserControls.vue'
 import Queue from '@/components/Queue.vue'
@@ -12,12 +12,14 @@ import SignInForm from '@/components/SignInForm.vue'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 import { useRoomsStore } from '@/stores/rooms.js'
 import { useWalletStore } from '@/stores/wallet.js'
+import { useQueueStore } from '@/stores/queue.js'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthenticationStore()
 const roomsStore = useRoomsStore()
 const walletStore = useWalletStore()
+const queueStore = useQueueStore()
 
 const isAuthed = computed(() => authStore.isAuthenticated)
 const roomId = computed(() => Number(route.params.id))
@@ -35,15 +37,72 @@ const loadRoom = async () => {
   await roomsStore.fetchRoom(roomId.value)
 }
 
+// The queue poll is also the heartbeat that holds a player's place, so
+// it runs for as long as they're in the room — not just while the bet
+// overlay is open. Phase 5 Step 7's push channel replaces the interval.
+const startQueue = () => {
+  if (isAuthed.value && authStore.emailVerified) {
+    queueStore.startPolling(roomId.value)
+  }
+}
+
 onMounted(async () => {
   await loadRoom()
   if (isAuthed.value) {
     walletStore.fetchWallet()
   }
+  startQueue()
 })
-watch(roomId, loadRoom)
+
+onBeforeUnmount(() => {
+  queueStore.reset()
+})
+
+// Announce the turn: purple styling comes from the queue components,
+// this is the audible half (ROADMAP §6.2). Synthesised rather than an
+// asset — one short tone, and it only fires on a real transition.
+const playTurnChime = () => {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext
+    if (!Ctx) return
+    const ctx = new Ctx()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(880, ctx.currentTime)
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.45)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.5)
+    osc.onended = () => ctx.close()
+  } catch {
+    // Autoplay policy or no audio device — the visual cue still lands.
+  }
+}
+
+watch(
+  () => queueStore.isMyTurn,
+  (mine, wasMine) => {
+    if (mine && !wasMine) {
+      playTurnChime()
+      isPlaceBetOverlayOpen.value = true
+    }
+  }
+)
+watch(roomId, async (id) => {
+  await loadRoom()
+  queueStore.reset()
+  if (id) startQueue()
+})
 watch(isAuthed, (authed) => {
-  if (authed) walletStore.fetchWallet()
+  if (authed) {
+    walletStore.fetchWallet()
+    startQueue()
+  } else {
+    queueStore.reset()
+  }
 })
 
 const promptSignIn = () => {
