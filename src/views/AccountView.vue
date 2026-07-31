@@ -1,10 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import Queue from '@/components/Queue.vue'
-import Rooms from '@/components/Rooms.vue'
+import RoomQueue from '@/components/RoomQueue.vue'
+import RoomList from '@/components/RoomList.vue'
 import FacelessAvatar from '@/components/FacelessAvatar.vue'
-import Overlay from '@/components/Overlay.vue'
+import ModalOverlay from '@/components/ModalOverlay.vue'
 import ReplenishmentBalance from '@/components/ReplenishmentBalance.vue'
 import WithdrawalRequest from '@/components/WithdrawalRequest.vue'
 import accountService from '@/services/accountService.js'
@@ -524,29 +524,29 @@ const handleGatedAction = (action) => {
         </div>
       </div>
     </div>
-    <Queue v-if="!authStore.isUserLoggedIn" />
-    <Rooms
+    <RoomQueue v-if="!authStore.isUserLoggedIn" />
+    <RoomList
       v-else
       view="sidebar"
       @on-room-click="(roomId) => router.push({ name: 'room', params: { id: roomId } })"
     />
   </div>
-  <Overlay
+  <ModalOverlay
     :is-overlay-open="isTopupOverlayOpen"
     @close-overlay="isTopupOverlayOpen = false"
     :title="'Replenish balance'"
     :caption="`Your balance: ${balanceCoins} coins`"
   >
     <ReplenishmentBalance />
-  </Overlay>
-  <Overlay
+  </ModalOverlay>
+  <ModalOverlay
     :is-overlay-open="isWithdrawOverlayOpen"
     @close-overlay="isWithdrawOverlayOpen = false"
     :title="'Withdraw coins'"
     :caption="`Your balance: ${balanceCoins} coins`"
   >
     <WithdrawalRequest @submitted="onWithdrawalSubmitted" />
-  </Overlay>
+  </ModalOverlay>
 </template>
 
 <style scoped>

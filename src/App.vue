@@ -1,7 +1,7 @@
 <script setup>
 import { RouterView, useRoute } from 'vue-router'
 import NavigationToggle from '@/components/NavigationToggle.vue'
-import Navigation from '@/components/Navigation.vue'
+import AppNavigation from '@/components/AppNavigation.vue'
 
 const route = useRoute()
 </script>
@@ -13,7 +13,7 @@ const route = useRoute()
       <div class="header__users-counter">100 Players</div>
     </div>
   </header>
-  <Navigation />
+  <AppNavigation />
   <main>
     <RouterView />
   </main>

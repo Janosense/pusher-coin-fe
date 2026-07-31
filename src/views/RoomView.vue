@@ -2,9 +2,9 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserControls from '@/components/UserControls.vue'
-import Queue from '@/components/Queue.vue'
-import Chat from '@/components/Chat.vue'
-import Overlay from '@/components/Overlay.vue'
+import RoomQueue from '@/components/RoomQueue.vue'
+import RoomChat from '@/components/RoomChat.vue'
+import ModalOverlay from '@/components/ModalOverlay.vue'
 import ReplenishmentBalance from '@/components/ReplenishmentBalance.vue'
 import PlaceBet from '@/components/PlaceBet.vue'
 import LiveStream from '@/components/LiveStream.vue'
@@ -136,7 +136,7 @@ const switchToReplenishment = () => {
 
 <template>
   <div class="room-view">
-    <Chat :readonly="!isAuthed" @send-attempted="promptSignIn" />
+    <RoomChat :readonly="!isAuthed" @send-attempted="promptSignIn" />
     <div class="room-view__layout">
       <div class="room-view__stream">
         <LiveStream
@@ -157,27 +157,27 @@ const switchToReplenishment = () => {
         <button class="room-view__guest-button" @click="promptSignIn">Sign in to play</button>
       </div>
     </div>
-    <Queue />
+    <RoomQueue />
   </div>
-  <Overlay
+  <ModalOverlay
     :is-overlay-open="isReplenishmentBalanceOverlayOpen"
     @close-overlay="isReplenishmentBalanceOverlayOpen = false"
     :title="'Replenish balance'"
     :caption="`Your balance: ${balanceCoins} coins`"
   >
     <ReplenishmentBalance />
-  </Overlay>
-  <Overlay
+  </ModalOverlay>
+  <ModalOverlay
     :is-overlay-open="isPlaceBetOverlayOpen"
     @close-overlay="isPlaceBetOverlayOpen = false"
     :title="'Place your bet'"
     :caption="`Your balance: ${balanceCoins} coins`"
   >
     <PlaceBet @open-replenishment-balance-overlay="switchToReplenishment" />
-  </Overlay>
-  <Overlay :is-overlay-open="isSignInOverlayOpen" @close-overlay="isSignInOverlayOpen = false">
+  </ModalOverlay>
+  <ModalOverlay :is-overlay-open="isSignInOverlayOpen" @close-overlay="isSignInOverlayOpen = false">
     <SignInForm :redirect="{ name: 'room', params: { id: roomId } }" />
-  </Overlay>
+  </ModalOverlay>
 </template>
 
 <style scoped>

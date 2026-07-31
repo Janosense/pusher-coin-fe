@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import Queue from '@/components/Queue.vue'
+import RoomQueue from '@/components/RoomQueue.vue'
 import historyService from '@/services/historyService.js'
 
 const items = ref([])
@@ -177,7 +177,7 @@ const isDebit = (row) =>
         </div>
       </div>
     </div>
-    <Queue />
+    <RoomQueue />
   </div>
 </template>
 

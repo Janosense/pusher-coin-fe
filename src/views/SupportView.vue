@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
-import Queue from '@/components/Queue.vue'
+import RoomQueue from '@/components/RoomQueue.vue'
 import supportService from '@/services/supportService.js'
 import accountService from '@/services/accountService.js'
 import { useAuthenticationStore } from '@/stores/authentication.js'
@@ -305,7 +305,7 @@ const startAnother = () => {
         </div>
       </div>
     </div>
-    <Queue v-if="authentication.isUserLoggedIn" />
+    <RoomQueue v-if="authentication.isUserLoggedIn" />
   </div>
 </template>
 

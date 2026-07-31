@@ -1,5 +1,5 @@
 <script setup>
-import Rooms from '@/components/Rooms.vue'
+import RoomList from '@/components/RoomList.vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -10,7 +10,7 @@ const enterRoom = (roomId) => {
 </script>
 
 <template>
-  <Rooms @on-room-click="enterRoom" />
+  <RoomList @on-room-click="enterRoom" />
 </template>
 
 <style scoped></style>

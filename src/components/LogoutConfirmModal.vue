@@ -1,5 +1,5 @@
 <script setup>
-import Overlay from '@/components/Overlay.vue'
+import ModalOverlay from '@/components/ModalOverlay.vue'
 import { useAuthenticationStore } from '@/stores/authentication.js'
 
 const props = defineProps({
@@ -16,7 +16,7 @@ const handleConfirm = async () => {
 </script>
 
 <template>
-  <Overlay :is-overlay-open="props.isOpen" title="Log out" @closeOverlay="emit('close')">
+  <ModalOverlay :is-overlay-open="props.isOpen" title="Log out" @closeOverlay="emit('close')">
     <p class="logout-modal__caption">Are you sure you want to log out?</p>
     <div class="logout-modal__actions">
       <button type="button" class="button button--ghost" @click="emit('close')">Cancel</button>
@@ -30,7 +30,7 @@ const handleConfirm = async () => {
         <span v-else>Logging out…</span>
       </button>
     </div>
-  </Overlay>
+  </ModalOverlay>
 </template>
 
 <style scoped>

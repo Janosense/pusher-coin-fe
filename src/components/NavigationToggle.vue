@@ -1,6 +1,4 @@
 <script setup>
-import { ref } from 'vue'
-
 import { useNavigationStore } from '@/stores/navigation.js'
 
 const navigation = useNavigationStore()
